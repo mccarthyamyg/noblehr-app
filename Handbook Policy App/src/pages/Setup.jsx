@@ -89,7 +89,7 @@ export default function Setup() {
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-200">
             <Building2 className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">PolicyVault</h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Noble HR</h1>
           <p className="text-slate-500 mt-2 text-sm">Set up your organization to get started</p>
           <p className="mt-3 text-sm">
             <button type="button" onClick={() => { logout(); window.location.href = '/Login'; }} className="text-indigo-600 hover:underline">

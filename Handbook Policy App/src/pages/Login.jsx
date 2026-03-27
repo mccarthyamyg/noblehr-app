@@ -56,7 +56,7 @@ export default function Login() {
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-7 h-7 text-white" />
           </div>
-          <CardTitle className="text-2xl">PolicyVault</CardTitle>
+          <CardTitle className="text-2xl">Noble HR</CardTitle>
           <p className="text-slate-500 text-sm mt-1">Sign in to your account</p>
         </CardHeader>
         <CardContent>

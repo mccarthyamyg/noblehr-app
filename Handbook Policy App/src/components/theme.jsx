@@ -7,8 +7,8 @@
 
 export const appTheme = {
   // App identification (for future theme profile linking)
-  id: 'policyvault',
-  name: 'PolicyVault',
+  id: 'noble_hr',
+  name: 'Noble HR',
   
   // Theme profile metadata (reserved for future cross-app linking)
   profile: {
@@ -17,34 +17,38 @@ export const appTheme = {
     linkedApps: [], // Future: List of app IDs sharing this profile
   },
 
-  // Customizable color palette
+  // Customizable color palette (Noble_HR_Rebrand_v2: app primary = deep blue; master brand = forest + royal purple)
   colors: {
-    // Primary brand color
-    primary: {
-      50: '#f0f9ff',
-      100: '#e0f2fe',
-      200: '#bae6fd',
-      300: '#7dd3fc',
-      400: '#38bdf8',
-      500: '#4f46e5',  // Main primary
-      600: '#4338ca',
-      700: '#3730a3',
-      800: '#312e81',
-      900: '#1e1b4b',
+    nobleMaster: {
+      forest: '#1B4332',
+      purple: '#4C1D95',
     },
-    
-    // Accent color (for highlights, CTAs)
+    // Primary brand color — Noble HR module blue (#1E40AF)
+    primary: {
+      50: '#eff6ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      300: '#93c5fd',
+      400: '#60a5fa',
+      500: '#1e40af',
+      600: '#1d4ed8',
+      700: '#1d4ed8',
+      800: '#1e40af',
+      900: '#1e3a8a',
+    },
+
+    // Royal purple accent (Noble master brand — use sparingly vs day-to-day blue UI)
     accent: {
       50: '#faf5ff',
       100: '#f3e8ff',
       200: '#e9d5ff',
       300: '#d8b4fe',
-      400: '#c084fc',
-      500: '#8b5cf6',  // Main accent
-      600: '#7c3aed',
-      700: '#6d28d9',
-      800: '#5b21b6',
-      900: '#4c1d95',
+      400: '#a78bfa',
+      500: '#6d28d9',
+      600: '#5b21b6',
+      700: '#4c1d95',
+      800: '#3b0764',
+      900: '#2e1065',
     },
 
     // Semantic colors (typically locked, but can be adjusted)
@@ -86,7 +90,7 @@ export const appTheme = {
   states: {
     hoverOpacity: '0.9',
     activeScale: '0.98',
-    focusRingColor: 'rgba(79, 70, 229, 0.5)', // Based on primary
+    focusRingColor: 'rgba(30, 64, 175, 0.45)',
     focusRingWidth: '3px',
   },
 };
@@ -96,8 +100,11 @@ export const appTheme = {
  */
 export function generateThemeCSS(theme = appTheme) {
   const { colors, typography, icons, states } = theme;
-  
+  const noble = colors.nobleMaster || {};
+
   return `
+    --color-noble-forest: ${noble.forest || '#1B4332'};
+    --color-noble-purple: ${noble.purple || '#4C1D95'};
     /* Primary Colors */
     ${Object.entries(colors.primary).map(([key, value]) => `--color-primary-${key}: ${value};`).join('\n    ')}
     

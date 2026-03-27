@@ -117,7 +117,7 @@ function LayoutShell({ children, currentPageName }) {
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="text-sm font-bold text-slate-900 truncate">{org?.name || 'PolicyVault'}</p>
+              <p className="text-sm font-bold text-slate-900 truncate">{org?.name || 'Noble HR'}</p>
               <p className="text-xs text-slate-400 truncate">{employee?.role || 'Governance'}</p>
             </div>
           )}
@@ -211,7 +211,7 @@ function LayoutShell({ children, currentPageName }) {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center">
             <Building2 className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-slate-900 text-sm">{org?.name || 'PolicyVault'}</span>
+          <span className="font-bold text-slate-900 text-sm">{org?.name || 'Noble HR'}</span>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

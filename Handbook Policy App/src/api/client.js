@@ -1,5 +1,5 @@
 /**
- * PolicyVault API Client - Replaces Base44
+ * Noble HR API client (PolicyVault backend) — replaces Base44
  * All API calls go through this client.
  * Web: cookie-only auth (httpOnly pv_access_token). No localStorage for tokens (Truth #172).
  * Uses credentials: 'include'; sends X-CSRF-Token on state-changing requests.

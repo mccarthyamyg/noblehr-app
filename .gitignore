@@ -1,2 +1,8 @@
 
 PolicyVaultExpo/
+
+# Local runtime / secrets — do not deploy or merge
+server/data/*.db
+server/data/backups/
+server/data/uploads/
+server/out2.txt
