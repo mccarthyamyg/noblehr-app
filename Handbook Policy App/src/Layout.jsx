@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { generateCoreCSS } from './components/designSystem';
 import { generateThemeCSS } from './components/theme';
+import LegalFooter from '@/components/legal/LegalFooter';
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { hasError: false, error: null }; }
@@ -243,6 +244,7 @@ function LayoutShell({ children, currentPageName }) {
       <main className="flex-1 pt-14 lg:pt-0 overflow-y-auto">
         <div className="p-4 lg:p-8 max-w-7xl mx-auto lg:min-h-screen pb-20 lg:pb-8" data-page-transition>
           {children}
+          <LegalFooter className="mt-12 border-t border-slate-100 pt-6" />
         </div>
       </main>
 

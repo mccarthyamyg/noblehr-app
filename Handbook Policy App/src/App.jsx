@@ -17,6 +17,9 @@ import VerifyEmail from './pages/VerifyEmail';
 import RequestApprovalAgain from './pages/RequestApprovalAgain';
 import ForgotEmail from './pages/ForgotEmail';
 import Launch from './pages/Launch';
+import TermsOfService from './pages/legal/TermsOfService';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import ContactConcerns from './pages/legal/ContactConcerns';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -49,6 +52,9 @@ const AuthenticatedApp = () => {
       <Route path="/RequestApprovalAgain" element={<RequestApprovalAgain />} />
       <Route path="/ForgotEmail" element={<ForgotEmail />} />
       <Route path="/Launch" element={<Launch />} />
+      <Route path="/legal/terms" element={<TermsOfService />} />
+      <Route path="/legal/privacy" element={<PrivacyPolicy />} />
+      <Route path="/legal/contact" element={<ContactConcerns />} />
       {!isAuthenticated ? (
         <Route path="*" element={<Navigate to="/Login" replace />} />
       ) : superAdmin && !superAdminImpersonating ? (

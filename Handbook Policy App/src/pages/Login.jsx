@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
+import LegalFooter from '@/components/legal/LegalFooter';
 
 export default function Login() {
   const { login, loginWithGoogle, authError } = useAuth();
@@ -50,7 +51,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex flex-col">
+      <div className="flex-1 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mx-auto mb-4">
@@ -158,6 +160,8 @@ export default function Login() {
           </p>
         </CardContent>
       </Card>
+      </div>
+      <LegalFooter className="bg-white/60 border-t border-slate-200/80 backdrop-blur-sm" />
     </div>
   );
 }
