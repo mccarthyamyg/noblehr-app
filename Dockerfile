@@ -33,13 +33,11 @@ COPY --from=frontend-builder ["/app/frontend/dist", "/app/Handbook Policy App/di
 # Copy the server codebase
 COPY --from=backend-builder ["/app/server", "/app/server"]
 
-# Ensure the database data directory exists and has proper permissions
-RUN mkdir -p /app/server/data && chown -R node:node /app/server/data
-
-# Switch to the non-root node user for security
-USER node
+# Ensure the database data directory exists unconditionally
+RUN mkdir -p /app/server/data
 
 WORKDIR /app/server
+
 
 # Expose standard Railway port binding variable
 ENV PORT=3001
