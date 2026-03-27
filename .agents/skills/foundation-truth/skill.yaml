@@ -1,0 +1,6 @@
+name: foundation-truth
+description: >
+  The Foundation Truth document for the PolicyVault HR app. Contains all
+  architectural decisions, operational requirements, business logic truths,
+  and current status of every feature. Must be referenced before making
+  any code changes. Truths are numbered and referenced by number.

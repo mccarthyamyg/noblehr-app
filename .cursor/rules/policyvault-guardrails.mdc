@@ -1,0 +1,11 @@
+---
+description: PolicyVault HR guardrails
+alwaysApply: true
+---
+
+# PolicyVault Guardrails
+
+- Immutable: PolicyVersion, Acknowledgment, SystemEvent, Amendment
+- Backend authority: never trust client for identity, role, targeting
+- Multi-tenant: filter by organization_id
+- Minimal incremental changes

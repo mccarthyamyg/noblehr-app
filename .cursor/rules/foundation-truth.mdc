@@ -1,0 +1,7 @@
+---
+description: Foundation Truth - source of truth for all development
+globs: 
+alwaysApply: true
+---
+
+Before making any code changes, read FOUNDATION_TRUTH.md in the project root. This is the source of truth for all architectural decisions, operational requirements, and business logic. If code contradicts a truth in this document, the document wins. Do not modify this file. Reference it by truth number when explaining changes.

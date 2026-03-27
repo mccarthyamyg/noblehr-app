@@ -1,0 +1,13 @@
+{
+  "extends": "./jsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*.d.ts",
+    "src/api/**/*.js",
+    "src/lib/**/*.js",
+    "src/utils/**/*.js"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
