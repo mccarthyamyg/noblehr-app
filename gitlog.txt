@@ -1,0 +1,1 @@
+a3bb546 Add legal pages (Terms, Privacy, Contact), footer on Login and Layout, and legal config.

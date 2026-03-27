@@ -99,7 +99,16 @@ if (existsSync(clientDist)) {
 mkdirSync(join(__dirname, 'data'), { recursive: true });
 mkdirSync(join(__dirname, 'data', 'uploads'), { recursive: true });
 
+import { execSync } from 'child_process';
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`PolicyVault server running on http://0.0.0.0:${PORT}`);
   console.log('Run "node scripts/init-db.js" first if database does not exist.');
+  try {
+    console.log('[AUTO-BOOT] Automatically seeding Super Admin password...');
+    execSync('node scripts/seed-super-admin.js SuperAdminPassword123!', { stdio: 'inherit', cwd: __dirname });
+    console.log('[AUTO-BOOT] Successfully seeded Super Admin.');
+  } catch (err) {
+    console.error('[AUTO-BOOT] Failed to automatically seed Super Admin:', err.message);
+  }
 });
