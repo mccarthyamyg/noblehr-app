@@ -99,7 +99,7 @@ if (existsSync(clientDist)) {
 mkdirSync(join(__dirname, 'data'), { recursive: true });
 mkdirSync(join(__dirname, 'data', 'uploads'), { recursive: true });
 
-app.listen(PORT, () => {
-  console.log(`PolicyVault server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`PolicyVault server running on http://0.0.0.0:${PORT}`);
   console.log('Run "node scripts/init-db.js" first if database does not exist.');
 });
