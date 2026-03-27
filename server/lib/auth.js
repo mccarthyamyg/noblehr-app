@@ -39,7 +39,7 @@ export function verifyToken(token) {
 }
 
 function getCookieOptions(name, maxAgeSec) {
-  const opts = { path: '/', sameSite: 'strict', maxAge: maxAgeSec };
+  const opts = { path: '/', sameSite: 'strict', maxAge: maxAgeSec * 1000 };
   if (isProd) opts.secure = true;
   if (name === COOKIE_ACCESS_TOKEN) opts.httpOnly = true;
   return opts;
