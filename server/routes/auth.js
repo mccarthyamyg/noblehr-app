@@ -3,7 +3,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { v4 as uuidv4 } from 'uuid';
 import { randomBytes } from 'crypto';
 import { db } from '../lib/db.js';
-import { hashPassword, verifyPassword, createToken, verifyToken, getEmployeeContext, setAuthCookie, clearAuthCookie, generateCsrfToken, setCsrfCookie, createRefreshTokenValue, storeRefreshToken, findRefreshTokenByValue, markRefreshTokenUsed, revokeAllRefreshTokensForUser } from '../lib/auth.js';
+import { hashPassword, verifyPassword, createToken, verifyToken, getEmployeeContext, setAuthCookie, clearSessionCookies, setRefreshCookie, COOKIE_REFRESH_TOKEN, generateCsrfToken, setCsrfCookie, createRefreshTokenValue, storeRefreshToken, findRefreshTokenByValue, markRefreshTokenUsed, revokeAllRefreshTokensForUser } from '../lib/auth.js';
 import { sendOrgApprovalNotification, sendPasswordReset, sendVerificationEmail } from '../lib/email.js';
 
 const APPROVAL_TOKEN_EXPIRY_DAYS = 7;
@@ -125,9 +125,9 @@ router.get('/csrf', (req, res) => {
   res.json({ csrf: token });
 });
 
-// POST /api/auth/logout — clear httpOnly auth cookie (web)
+// POST /api/auth/logout — clear httpOnly access + refresh cookies (web)
 router.post('/logout', (req, res) => {
-  clearAuthCookie(res);
+  clearSessionCookies(res);
   res.json({ ok: true });
 });
 
@@ -151,7 +151,11 @@ const ACCESS_TOKEN_EXPIRY = '15m';
 // POST /api/auth/refresh — rotate refresh token; return new access + refresh (4.2)
 router.post('/refresh', async (req, res) => {
   try {
-    const { refresh_token } = req.body || {};
+    const isWeb = req.headers['x-client-type'] !== 'mobile';
+    let refresh_token = req.body?.refresh_token;
+    if ((!refresh_token || typeof refresh_token !== 'string') && isWeb) {
+      refresh_token = req.cookies?.[COOKIE_REFRESH_TOKEN];
+    }
     if (!refresh_token || typeof refresh_token !== 'string') {
       return res.status(400).json({ error: 'refresh_token required' });
     }
@@ -167,7 +171,6 @@ router.post('/refresh', async (req, res) => {
     if (expiresAt < new Date()) {
       return res.status(401).json({ error: 'Refresh token expired' });
     }
-    const isWeb = req.headers['x-client-type'] !== 'mobile';
     if (row.user_type === 'super_admin') {
       const superAdmin = db.prepare('SELECT * FROM super_admins WHERE id = ?').get(row.user_id);
       if (!superAdmin) return res.status(401).json({ error: 'User not found' });
@@ -176,7 +179,10 @@ router.post('/refresh', async (req, res) => {
       const newExpires = new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString();
       markRefreshTokenUsed(row.id);
       storeRefreshToken('super_admin', row.user_id, newRefresh, newExpires);
-      if (isWeb) setAuthCookie(res, accessToken);
+      if (isWeb) {
+        setAuthCookie(res, accessToken);
+        setRefreshCookie(res, newRefresh);
+      }
       return res.json({ token: accessToken, refresh_token: newRefresh, expires_in: 900 });
     }
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(row.user_id);
@@ -186,7 +192,10 @@ router.post('/refresh', async (req, res) => {
     const newExpires = new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString();
     markRefreshTokenUsed(row.id);
     storeRefreshToken('user', row.user_id, newRefresh, newExpires);
-    if (isWeb) setAuthCookie(res, accessToken);
+    if (isWeb) {
+      setAuthCookie(res, accessToken);
+      setRefreshCookie(res, newRefresh);
+    }
     const { org: orgCtx, employee } = getEmployeeContext(user.email);
     return res.json({ token: accessToken, refresh_token: newRefresh, expires_in: 900, user: { email: user.email, full_name: user.full_name }, org: orgCtx, employee });
   } catch (e) {
@@ -213,7 +222,10 @@ router.post('/login', (req, res) => {
       const refreshExpires = new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString();
       const refreshToken = createRefreshTokenValue();
       storeRefreshToken('super_admin', superAdmin.id, refreshToken, refreshExpires);
-      if (isWeb) setAuthCookie(res, token);
+      if (isWeb) {
+        setAuthCookie(res, token);
+        setRefreshCookie(res, refreshToken);
+      }
       return res.json({
         token,
         refresh_token: refreshToken,
@@ -254,7 +266,10 @@ router.post('/login', (req, res) => {
     const refreshExpires = new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const refreshToken = createRefreshTokenValue();
     storeRefreshToken('user', user.id, refreshToken, refreshExpires);
-    if (isWeb) setAuthCookie(res, token);
+    if (isWeb) {
+      setAuthCookie(res, token);
+      setRefreshCookie(res, refreshToken);
+    }
     const { org: orgCtx, employee } = getEmployeeContext(user.email);
     res.json({ token, refresh_token: refreshToken, expires_in: 900, user: { email: user.email, full_name: user.full_name }, org: orgCtx, employee });
   } catch (e) {
@@ -292,7 +307,10 @@ router.post('/google', async (req, res) => {
     const refreshExpires = new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const refreshToken = createRefreshTokenValue();
     storeRefreshToken('user', user.id, refreshToken, refreshExpires);
-    if (req.headers['x-client-type'] !== 'mobile') setAuthCookie(res, token);
+    if (req.headers['x-client-type'] !== 'mobile') {
+      setAuthCookie(res, token);
+      setRefreshCookie(res, refreshToken);
+    }
     const { org: orgCtx, employee } = getEmployeeContext(user.email);
     res.json({ token, refresh_token: refreshToken, expires_in: 900, user: { email: user.email, full_name: user.full_name }, org: orgCtx, employee });
   } catch (e) {

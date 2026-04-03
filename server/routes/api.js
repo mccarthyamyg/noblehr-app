@@ -69,6 +69,24 @@ function getAuditContext(req) {
   return { ip_address: ip || null, device_id: null, app_source };
 }
 
+/** SPA origin for launch/invite links. Prefer FRONTEND_URL when it is a real public URL; if it is missing or localhost-only, derive from the request (Railway / reverse proxy). */
+function publicFrontendBase(req) {
+  const raw = (process.env.FRONTEND_URL || '').trim().replace(/\/$/, '');
+  const host = req.get('x-forwarded-host') || req.get('host') || '';
+  const envLooksLocal = !raw || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(raw);
+  const hostLooksDeployed = host && !/^localhost(:\d+)?$/i.test(host) && !/^127\.0\.0\.1(:\d+)?$/i.test(host);
+  if (envLooksLocal && hostLooksDeployed) {
+    const proto = (req.get('x-forwarded-proto') || '').split(',')[0].trim() || 'https';
+    return `${proto}://${host}`;
+  }
+  if (raw) return raw;
+  if (host) {
+    const proto = (req.get('x-forwarded-proto') || '').split(',')[0].trim() || req.protocol || 'https';
+    return `${proto}://${host}`;
+  }
+  return 'http://localhost:5173';
+}
+
 function isAdmin(employee) {
   return employee?.permission_level === 'org_admin';
 }
@@ -321,7 +339,7 @@ router.post('/super-admin/launch-token', requireSuperAdmin, (req, res) => {
     stringifyJson({ impersonate_org_id: organization_id }),
     audit.ip_address, audit.device_id, audit.app_source, null, null
   );
-  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const baseUrl = publicFrontendBase(req);
   const launchLink = `${baseUrl}/Launch?token=${token}`;
   res.json({ data: { token, launch_link: launchLink } });
 });
@@ -1045,7 +1063,8 @@ router.post('/activity-log', (req, res) => {
   query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
   args.push(cappedLimit, cappedSkip);
 
-  const events = db.prepare(query).all(...args);
+  const rows = db.prepare(query).all(...args);
+  const events = rows.map((e) => ({ ...e, created_date: e.created_at }));
   res.json({ data: { events } });
 });
 
@@ -1101,7 +1120,7 @@ router.post('/invites/create', (req, res) => {
     (role || '').trim().slice(0, 100), location_id || null
   );
 
-  const baseUrl = process.env.FRONTEND_URL || (req.protocol + '://' + (req.get('x-forwarded-host') || req.get('host')));
+  const baseUrl = publicFrontendBase(req);
   const inviteLink = `${baseUrl}/InviteAccept?token=${token}`;
 
   res.json({

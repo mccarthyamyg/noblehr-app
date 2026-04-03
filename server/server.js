@@ -10,11 +10,13 @@ import cookieParser from 'cookie-parser';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdirSync, existsSync } from 'fs';
+import { spawnSync } from 'child_process';
 
 import { authRouter } from './routes/auth.js';
 import { apiRouter } from './routes/api.js';
 import { db } from './lib/db.js';
 import { csrfMiddleware } from './lib/auth.js';
+import { runSqliteMigrations } from './lib/run-sqlite-migrations.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3001;
@@ -34,6 +36,26 @@ app.use((req, res, next) => {
   res.setHeader('X-Request-ID', req.id);
   next();
 });
+
+// Phase 6: structured request log in production
+if (isProd) {
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      if (req.path.startsWith('/api')) {
+        console.log(JSON.stringify({
+          ts: new Date().toISOString(),
+          requestId: req.id,
+          method: req.method,
+          path: req.originalUrl?.split('?')[0] || req.path,
+          status: res.statusCode,
+          ms: Date.now() - start,
+        }));
+      }
+    });
+    next();
+  });
+}
 app.use(helmet({ contentSecurityPolicy: false })); // CSP can break SPA; enable with care
 app.use(cors({
   origin: corsOrigin,
@@ -99,16 +121,34 @@ if (existsSync(clientDist)) {
 mkdirSync(join(__dirname, 'data'), { recursive: true });
 mkdirSync(join(__dirname, 'data', 'uploads'), { recursive: true });
 
-import { execSync } from 'child_process';
+function runStartupMigrations() {
+  try {
+    runSqliteMigrations(db);
+  } catch (err) {
+    console.error('[migrations] Failed:', err.message);
+  }
+}
+
+/** Phase 1: only when AUTO_SEED_SUPER_ADMIN=true and SUPER_ADMIN_PASSWORD is set (never hardcode in source). */
+function maybeAutoSeedSuperAdmin() {
+  if (process.env.AUTO_SEED_SUPER_ADMIN !== 'true') return;
+  const p = process.env.SUPER_ADMIN_PASSWORD;
+  if (!p || p.length < 8) {
+    console.warn('[AUTO-BOOT] AUTO_SEED_SUPER_ADMIN is set but SUPER_ADMIN_PASSWORD is missing or shorter than 8 chars; skipping seed.');
+    return;
+  }
+  const r = spawnSync(process.execPath, ['scripts/seed-super-admin.js'], {
+    cwd: __dirname,
+    env: { ...process.env, SUPER_ADMIN_PASSWORD: p },
+    stdio: 'inherit',
+  });
+  if (r.status !== 0) console.error('[AUTO-BOOT] Super admin seed exited with code', r.status);
+  else console.log('[AUTO-BOOT] Super admin seed completed.');
+}
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`PolicyVault server running on http://0.0.0.0:${PORT}`);
   console.log('Run "node scripts/init-db.js" first if database does not exist.');
-  try {
-    console.log('[AUTO-BOOT] Automatically seeding Super Admin password...');
-    execSync('node scripts/seed-super-admin.js SuperAdminPassword123!', { stdio: 'inherit', cwd: __dirname });
-    console.log('[AUTO-BOOT] Successfully seeded Super Admin.');
-  } catch (err) {
-    console.error('[AUTO-BOOT] Failed to automatically seed Super Admin:', err.message);
-  }
+  runStartupMigrations();
+  maybeAutoSeedSuperAdmin();
 });

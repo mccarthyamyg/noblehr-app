@@ -7,7 +7,7 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 let csrfToken = null;
-/** In-memory only (no localStorage). Used for /auth/refresh on 401; lost on page reload. */
+/** In-memory fallback for /auth/refresh (e.g. mobile tests). Web uses httpOnly pv_refresh_token cookie. */
 let refreshTokenInMemory = null;
 
 function getRefreshToken() {
@@ -51,13 +51,16 @@ async function doRequest(path, options, skipRefresh) {
   if (res.status === 403 && data?.error && data.error.includes('CSRF')) {
     csrfToken = null;
   }
-  if (res.status === 401 && !skipRefresh && getRefreshToken()) {
+  if (res.status === 401 && !skipRefresh) {
+    const mem = getRefreshToken();
+    // Web: empty body — server reads pv_refresh_token cookie. Mobile/tests: body.refresh_token.
+    const refreshBody = mem ? { refresh_token: mem } : {};
     try {
       const refreshed = await fetch(`${API_BASE}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: getRefreshToken() }),
+        body: JSON.stringify(refreshBody),
       });
       const refData = await refreshed.json().catch(() => ({}));
       if (refreshed.ok && refData.token) {

@@ -1,0 +1,60 @@
+# Phase 4: lint + build + API smoke/E2E (SQLite, ephemeral super-admin seed on boot)
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Handbook Policy App
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: Handbook Policy App/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  server:
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: ci-jwt-secret-at-least-32-characters-long
+      SUPER_ADMIN_PASSWORD: CiTestSuperAdminPass123!
+      AUTO_SEED_SUPER_ADMIN: "true"
+      NODE_ENV: development
+      PORT: "3001"
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: node scripts/init-db.js
+      - name: Start API
+        run: |
+          node server.js &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:3001/api/health && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:3001/api/health || (echo "Server failed to start"; exit 1)
+      - name: Smoke + E2E
+        env:
+          SUPER_ADMIN_PASSWORD: CiTestSuperAdminPass123!
+        run: |
+          node scripts/test-smoke-launch.js
+          node scripts/test-e2e.js

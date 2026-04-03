@@ -14,7 +14,7 @@ import {
   ArrowRight, TrendingUp
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 export default function Dashboard() {
   const { org, employee } = useOrg();
@@ -234,7 +234,11 @@ export default function Dashboard() {
                     <p className="text-slate-700">{event.summary}</p>
                     <p className="text-xs text-slate-400 mt-0.5">
                       {event.actor_name && `${event.actor_name} · `}
-                      {format(new Date(event.created_date), 'MMM d, h:mm a')}
+                      {(() => {
+                        const raw = event.created_date ?? event.created_at;
+                        const d = raw ? new Date(raw) : null;
+                        return d && isValid(d) ? format(d, 'MMM d, h:mm a') : '—';
+                      })()}
                     </p>
                   </div>
                   <StatusBadge status={event.event_type?.split('.')[1]} />

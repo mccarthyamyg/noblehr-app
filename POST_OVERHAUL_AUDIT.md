@@ -10,22 +10,47 @@
 
 ---
 
+## RE-AUDIT RUN — 2026-04-03 (14-layer pass)
+
+**Method:** Re-read codebase artifacts; run `npm audit` (server + Handbook Policy App); run `node scripts/test-smoke-launch.js` and `node scripts/test-e2e.js` against local server on PORT 3001.
+
+**Automated results (this run):**
+| Check | Result |
+|--------|--------|
+| **Smoke** (`test-smoke-launch.js`) | **14/14 passed** when `SUPER_ADMIN_PASSWORD` matches the password used by `server.js` startup seed (`SuperAdminPassword123!` in current `execSync` call). Default in smoke script is `PolicyVault2025!` — **login fails** unless env is set. |
+| **E2E** (`test-e2e.js`) | **25/25 passed** with same `SUPER_ADMIN_PASSWORD` override. |
+| **Server `npm audit`** | **8 vulnerabilities** (1 low, 6 moderate, 1 high): @anthropic-ai/sdk (moderate, fix force → 0.82), brace-expansion (moderate), esbuild via drizzle-kit dev chain (moderate), nodemailer &lt;8.0.4 (SMTP injection), path-to-regexp (high ReDoS). |
+| **Frontend `npm audit`** | **Non-zero**; includes transitive issues (e.g. brace-expansion, flatted, jspdf advisory chain). Run `npm audit` in `Handbook Policy App` for current detail. |
+
+**Layer deltas verified in code since prior POST_OVERHAUL text:**
+- **L1:** App is deployed on **Railway** at **`https://noblehr-app-production.up.railway.app`** (not encoded in repo; operational fact from 2026-Q1 verification). Still no `.github/workflows` at repo root.
+- **L2:** **`employee_documents`** table + upload routes in `server/routes/api.js` (~1888+); `server/data/uploads`; `init-db.js` creates `employee_documents` + indexes.
+- **L4:** **`publicFrontendBase(req)`** in `server/routes/api.js` — launch-token and invite links derive HTTPS host from proxy when `FRONTEND_URL` is missing or localhost-only. **`POST /activity-log`** maps each row with **`created_date: created_at`** for API consumers.
+- **L6:** **`server/lib/auth.js`** cookie **`maxAge`** uses milliseconds (Express); session cookie must not be `Max-Age=0` in production.
+- **L8–9:** **34** `*.jsx` page files under `Handbook Policy App/src/pages` (includes `legal/*`, `VerifyEmail.jsx`, etc.); prior audit said ~30.
+- **L10:** **Multipart file upload** for employee documents (multer, `server/routes/api.js`); not “no dedicated multipart” anymore.
+- **L13 (new debt):** **`server/server.js`** runs **`execSync('node scripts/seed-super-admin.js SuperAdminPassword123!', ...)`** on listen — plaintext password in process args / repo behavior risk; should be env-driven one-shot seed only.
+
+**Engineering score (this run):** **~7.5/10** (up from 7.25): production path exercised; launch URL and activity-log/Dashboard date bugs addressed in code; remaining gaps: web localStorage JWT, npm audit debt, auto-seed password in `server.js`, no CI, SQLite on Railway unless volume-backed.
+
+---
+
 ═══════════════════════════════════════════════════════════
 LAYER 1 — PRODUCTION AND LIVE STATUS
 ═══════════════════════════════════════════════════════════
 
 **Is any part of this app currently running in production or accessible at a live URL?**
-- **No.** There is no evidence in the codebase of a production deployment or live URL. `FRONTEND_URL` in `server/.env.example` is `http://localhost:5173`; no production URL is configured.
+- **Yes (operational).** Primary Railway URL: **`https://noblehr-app-production.up.railway.app`**. Not hardcoded in application source; set via hosting (`FRONTEND_URL`, `PORT`, `JWT_SECRET`, etc.). Repo still has no embedded production URL in config files beyond `.env.example` placeholders.
 
-**Environment / access / data:** N/A — nothing is in production.
+**Environment / access / data:** Node server + SQLite (`server/data/policyvault.db`) unless volume-mounted on Railway; static SPA from `Handbook Policy App/dist` when built and present (`server/server.js` ~88–96).
 
-**Active use by real users:** None. No production deployment exists.
+**Active use by real users:** Possible on deployed instance; not quantified in repo.
 
-**Most recent deployment / what broke:** Not applicable. No deployment history (no `.github/workflows` in project root, no Dockerfile in repo). `DEPLOYMENT.md` and `DEPLOY.md` exist and describe manual/split deployment options but no automated pipeline.
+**Most recent deployment / what broke:** Manual/Railway deploys; no CI in repo (no root `.github/workflows`). Cookie `maxAge` and launch-link host issues were fixed in code (2026-Q1).
 
-**Current state of the build:** **Local only; deployable.** Server runs on Node (`server/server.js`, PORT default 3001 from `process.env.PORT`). Web client: `Handbook Policy App` builds with Vite (`npm run build` → `Handbook Policy App/dist/`). Server serves static from `join(__dirname, '..', 'Handbook Policy App', 'dist')` when present (`server/server.js` lines 79–85). Expo app: `PolicyVaultExpo` (Expo SDK 55, Expo Router) exists and runs via `expo start`; no app-store submission or production build configured in repo. Smoke tests (14/14) and E2E (25/25) pass per project state.
+**Current state of the build:** **Deployable locally and on Railway.** Server: `server/server.js`, PORT from `process.env.PORT` (Railway sets this). Web: Vite build → `dist/`. Expo: `PolicyVaultExpo` unchanged. **Smoke 14/14** and **E2E 25/25** pass locally when super-admin password env matches seed.
 
-**CHANGES SINCE LAST AUDIT:** None in this layer. Still no production URL, no CI/CD, no Docker. Documentation (RUNBOOK.md, DEPLOYMENT.md) and backup script were added; production deployment status unchanged.
+**CHANGES SINCE PRIOR LAYER 1 TEXT:** Production URL live on Railway; `publicFrontendBase` mitigates wrong `FRONTEND_URL` for launch/invites; still no CI/Docker in repo.
 
 ---
 
@@ -64,6 +89,7 @@ LAYER 2 — FOUNDATION: DATA AND STORAGE
 | **password_reset_tokens** | id TEXT PK, email TEXT NOT NULL, token TEXT UNIQUE NOT NULL, expires_at TEXT NOT NULL, used_at TEXT, created_at TEXT |
 | **refresh_tokens** | id TEXT PK, user_type TEXT NOT NULL, user_id TEXT NOT NULL, token_hash TEXT NOT NULL, created_at TEXT, expires_at TEXT NOT NULL, used_at TEXT, revoked_at TEXT |
 | **compliance_checklist_items** | id TEXT PK, organization_id TEXT NOT NULL, state TEXT NOT NULL, industry TEXT, requirement_key TEXT NOT NULL, requirement_text TEXT NOT NULL, suggested_answer TEXT, confirmed INTEGER DEFAULT 0, confirmed_at TEXT, confirmed_by TEXT, notes TEXT, created_at TEXT, updated_at TEXT |
+| **employee_documents** | id TEXT PK, organization_id TEXT NOT NULL, employee_id TEXT NOT NULL, uploaded_by TEXT, filename TEXT, stored_filename TEXT, file_size INTEGER, mime_type TEXT, category TEXT, notes TEXT, created_at TEXT, deleted_at TEXT (soft delete); indexes `idx_employee_documents_org_emp`, `idx_employee_documents_deleted` (`server/scripts/init-db.js`) |
 
 **Indexes:** idx_employees_org (employees.organization_id), idx_employees_email (employees.user_email), idx_policies_org (policies.organization_id), idx_acknowledgments_emp (acknowledgments.employee_id), idx_acknowledgments_policy (acknowledgments.policy_id), idx_system_events_org (system_events.organization_id), idx_amendments_org (amendments.organization_id), idx_refresh_token_hash (refresh_tokens.token_hash), idx_refresh_user (refresh_tokens.user_type, user_id), idx_compliance_org, idx_compliance_state_industry; plus migration-added idx_amendments_org where applicable.
 
@@ -75,7 +101,7 @@ LAYER 2 — FOUNDATION: DATA AND STORAGE
 
 **Backup strategy:** **Implemented.** `server/scripts/backup-db.js`: copies `server/data/policyvault.db` to `server/data/backups/policyvault-<timestamp>.db` using better-sqlite3 readonly connection and `db.backup(filename)`. Retention: keeps last `BACKUP_RETENTION_COUNT` (default 7, env-overridable); older files deleted by mtime. Env: `BACKUP_RETENTION_COUNT`, `BACKUP_DIR`. Restore: stop app, replace policyvault.db with backup file, restart. No cron or external copy (e.g. S3) in repo; RUNBOOK.md documents backup/restore.
 
-**CHANGES SINCE LAST AUDIT:** Backup added (`server/scripts/backup-db.js`, npm script `backup`). New tables: refresh_tokens, compliance_checklist_items, password_reset_tokens; new columns on organizations (state, tos_accepted_at), employees (capabilities), pending_re_acknowledgments (due_date). Drizzle schema and migrations for PostgreSQL added (`server/db/schema.js`, `server/db/migrations/`) but not used at runtime. No migration version table for SQLite path; backup strategy is present.
+**CHANGES SINCE LAST AUDIT:** Backup added (`server/scripts/backup-db.js`, npm script `backup`). New tables: refresh_tokens, compliance_checklist_items, password_reset_tokens, **employee_documents**; new columns on organizations (state, tos_accepted_at), employees (capabilities), pending_re_acknowledgments (due_date). Drizzle schema and migrations for PostgreSQL added (`server/db/schema.js`, `server/db/migrations/`) but not used at runtime. No migration version table for SQLite path; backup strategy is present.
 
 ---
 
@@ -193,11 +219,15 @@ LAYER 4 — PLUMBING: ROUTES AND ENDPOINTS
 | POST | /api/gap-audit | JWT | Gap audit. |
 | POST | /api/export-employee-file | JWT | Export employee file. |
 | POST | /api/export-org-data | JWT | Full org JSON. |
-| POST | /api/employee-profile | JWT | Employee + location. |
+| POST | /api/employee-profile | JWT | Employee + location + **employee_documents** list. |
+| POST | /api/employee-documents/upload | JWT | Multipart upload (multer); writes `server/data/uploads`. |
+| GET | /api/employee-documents/:employee_id | JWT | List documents for employee. |
+| GET | /api/employee-documents/download/:document_id | JWT | Stream file. |
+| DELETE | /api/employee-documents/:document_id | JWT | Soft-delete document. |
 
 **Routes defined but not wired to frontend:** None identified; AI and compliance routes are called from Handbook Policy App (invoke map in client.js).
 
-**CHANGES SINCE LAST AUDIT:** GET /api/auth/csrf, POST /api/auth/refresh, POST /api/auth/logout (cookie clear). GET /api/capabilities added. Activity-log now respects skip, search, event_type_prefix (`server/routes/api.js` lines 951–967). Entity-write HRRecord create now inserts severity and discipline_level (lines 621–624). New routes: /api/ai/* (generate-policy, scan-handbook-missing, extract-handbook, handbook-recommend, handbook-generate-selected, policy-suggest), /api/compliance-checklist, /api/compliance-checklist/confirm, /api/gap-audit, /api/export-employee-file.
+**CHANGES SINCE LAST AUDIT:** GET /api/auth/csrf, POST /api/auth/refresh, POST /api/auth/logout (cookie clear). GET /api/capabilities added. Activity-log respects skip, search, event_type_prefix and returns **`created_date`** alias from **`created_at`**. Entity-write HRRecord create inserts severity and discipline_level. **`publicFrontendBase(req)`** for launch-token + invite links. New routes: /api/ai/*, compliance, gap-audit, export, **employee document upload/download/delete**.
 
 ---
 
@@ -350,7 +380,7 @@ LAYER 10 — INPUTS AND OUTPUTS
 
 **Inputs:**  
 - **Form submissions:** Login, register, Google, invite accept, approve-org, forgot/reset password, policy create/edit, handbook, onboarding, employee create/edit, HR record create/amend, incident create/update, compliance confirm, org/location/targeting, super-admin actions. All via POST (or GET for validate) to /api/auth/* and /api routes.  
-- **File uploads:** No dedicated multipart upload endpoint found; incident attachments may be stored as references (attachments TEXT on incident_reports).  
+- **File uploads:** **Employee documents** — multipart via multer (`server/routes/api.js`, `server/data/uploads`). Incident attachments may still be references (attachments TEXT on incident_reports).  
 - **External API calls:** None into this app.  
 - **Scheduled pulls:** None.
 
@@ -401,9 +431,9 @@ LAYER 11 — DATA INTEGRITY AND AUDIT
 LAYER 12 — DEVOPS AND BUILD
 ═══════════════════════════════════════════════════════════
 
-**Hosting:** No hosting platform configured in repo. DEPLOYMENT.md / DEPLOY.md describe manual/split deploy; no Railway or other provider in code.
+**Hosting:** **Railway** used in production for Noble HR (`noblehr-app-production.up.railway.app` — not in git). DEPLOYMENT.md / DEPLOY.md still describe manual/split options.
 
-**Deploy method:** Manual. Build client (Vite); run server (Node). No CI/CD in repo (no .github/workflows, no other pipeline config).
+**Deploy method:** **Railway** (typical) or manual: build Vite client; Node serves API + static `dist`. No CI/CD in repo (no root `.github/workflows`).
 
 **CI/CD:** None. Scripts exist: test:smoke (test-smoke-launch.js), test:e2e (test-e2e.js); no automation that runs them on commit.
 
@@ -415,7 +445,7 @@ LAYER 12 — DEVOPS AND BUILD
 
 **Docker/containers:** None. No Dockerfile or docker-compose in project.
 
-**CHANGES SINCE LAST AUDIT:** None. Still no CI/CD, no Docker, no monitoring, no production hosting in repo.
+**CHANGES SINCE LAST AUDIT:** Production hosting on Railway in use; repo still has no pipeline YAML or Docker at project root.
 
 ---
 
@@ -425,10 +455,15 @@ LAYER 13 — KNOWN ISSUES AND TECHNICAL DEBT
 
 **Fixed since last audit:**  
 - **HR record create:** severity and discipline_level are now persisted in entity-write HRRecord INSERT (`server/routes/api.js` lines 621–624).  
-- **Activity log:** skip, search, event_type_prefix are applied in SQL (lines 956–967).
+- **Activity log:** skip, search, event_type_prefix are applied in SQL; response includes **`created_date`** for UI (`created_at` alias).  
+- **Dashboard date crash:** Frontend uses `isValid` + `created_at` fallback; API maps `created_date`.  
+- **Launch / invite URLs:** `publicFrontendBase(req)` when env is localhost-only.  
+- **Session cookie:** Express `maxAge` in milliseconds for `pv_access_token`.
 
 **Broken / missing:**  
 - **Web client token storage:** JWT and refresh token still in localStorage (Handbook Policy App/src/api/client.js); XSS can steal token. Backend supports httpOnly cookie but web app does not rely on it only.  
+- **Server boot:** `server/server.js` **`execSync` seeds super admin with plaintext password in argv** — security/process-list risk; smoke default password does not match unless env aligned.  
+- **npm audit:** Server **8** and frontend **multiple** open advisories (see RE-AUDIT RUN table); not auto-remediated.  
 - **TypeScript:** Full-project typecheck may still fail on UI/Radix (previous audit); not re-verified this run.  
 - **Migration versioning:** No schema_version table for SQLite; Drizzle migrations exist for PostgreSQL only; init-db.js order is implicit.
 
@@ -461,11 +496,11 @@ LAYER 14 — ENGINEERING ASSESSMENT
 - **Web frontend:** Handbook Policy App/src/App.jsx, src/api/client.js (invoke + token in localStorage), AuthContext, src/pages/*.jsx.  
 - **Expo:** PolicyVaultExpo/app with Expo Router (auth + tabs).
 
-**Overall health:** **7.25/10.**  
-- **Improvements:** HR create and activity-log fixed; backup script; refresh tokens and cookie support; CSRF; real Claude integration; Expo app started; tests passing.  
-- **Gaps:** Web still uses localStorage for JWT; no CI/CD/Docker/monitoring; no migration versioning for SQLite; two frontends to maintain; Expo not at parity.
+**Overall health:** **7.5/10** (re-audit 2026-04-03).  
+- **Improvements:** Production on Railway; HR create and activity-log fixed; employee documents; backup; refresh/cookie/CSRF; real Claude when keyed; `publicFrontendBase`; cookie maxAge fix; smoke **14/14** + E2E **25/25** with correct env.  
+- **Gaps:** Web still uses localStorage for JWT; npm audit debt; auto-seed password in `server.js`; no CI/Docker/monitoring in repo; SQLite migration versioning; Expo not at parity.
 
-**Single most important fix before real users:** **Stop storing JWT in localStorage on the web client** and use cookie-only auth for the Handbook Policy App (backend already supports it), to remove XSS token theft risk.
+**Single most important fix before real users:** **Stop storing JWT in localStorage on the web client** and use cookie-only auth for the Handbook Policy App (backend already supports it), to remove XSS token theft risk. **Second:** remove hardcoded super-admin password from `execSync` boot; use env + manual/one-off seed.
 
 **Recommended next steps (engineering):**  
 1. Web client: remove localStorage for access/refresh token; use credentials: 'include' only; rely on server-set cookie and refresh endpoint (no Bearer from client for web).  
@@ -476,7 +511,7 @@ LAYER 14 — ENGINEERING ASSESSMENT
 
 **Other concerns:** Employee create without email for new users; no rate/cost guard on Claude; export-org-data unbounded for very large orgs; timestamp consistency (UTC) and retention/legal-hold policy not in code.
 
-**COMPARISON TO PREVIOUS AUDIT:** Previous **6.5/10** with top priority severity/discipline_level persistence. **New rating 7.25/10.** What changed: HR create and activity-log fixed; backup and refresh/cookie/CSRF added; real Claude; Expo app; tests passing. What remains: localStorage on web, no CI/CD/Docker/monitoring, no migration versioning, no production deploy.
+**COMPARISON TO PREVIOUS AUDIT:** Previous **6.5/10** with top priority severity/discipline_level persistence; interim **7.25/10** in POST_OVERHAUL body. **Re-audit 2026-04-03: 7.5/10.** What changed: Railway production; employee documents; launch URL + activity date + cookie fixes; tests re-run green. What remains: localStorage on web, npm audit cleanup, remove boot `execSync` password, CI/monitoring, SQLite versioning.
 
 ---
 

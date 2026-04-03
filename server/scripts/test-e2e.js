@@ -32,6 +32,13 @@ function ok(name, cond, detail = '') {
 async function run() {
   console.log('\n=== E2E Test: Signup, Approval, Super Admin ===\n');
 
+  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+  if (!superAdminPassword || superAdminPassword.length < 8) {
+    console.error('Set SUPER_ADMIN_PASSWORD in the environment (8+ characters).');
+    console.error('Example: SUPER_ADMIN_PASSWORD=YourPass123! node scripts/test-e2e.js');
+    process.exit(1);
+  }
+
   const testEmail = `test-org-${Date.now()}@test.example.com`;
   const testPass = 'TestPass123!';
   const orgName = `Test Org ${Date.now()}`;
@@ -65,10 +72,9 @@ async function run() {
   // 3. Login as super admin
   console.log('\n3. Login as super admin...');
   const saEmail = process.env.SUPER_ADMIN_EMAIL || 'mccarthy.amyg@gmail.com';
-  const saPassword = process.env.SUPER_ADMIN_PASSWORD || 'PolicyVault2025!';
   const saLogin = await request('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email: saEmail, password: saPassword }),
+    body: JSON.stringify({ email: saEmail, password: superAdminPassword }),
   });
   ok('Super admin login succeeds', saLogin.ok && saLogin.data?.token);
   ok('Super admin flag set', saLogin.data?.superAdmin === true);

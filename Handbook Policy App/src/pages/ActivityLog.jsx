@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 const eventIcons = {
   'policy.published': '📋',
@@ -127,7 +127,11 @@ export default function ActivityLog() {
                   <p className="text-sm text-slate-800">{event.summary}</p>
                   <div className="flex items-center gap-3 mt-1.5">
                     <span className="text-xs text-slate-400">
-                      {format(new Date(event.created_date), 'MMM d, yyyy \'at\' h:mm a')}
+                      {(() => {
+                        const raw = event.created_date ?? event.created_at;
+                        const d = raw ? new Date(raw) : null;
+                        return d && isValid(d) ? format(d, 'MMM d, yyyy \'at\' h:mm a') : '—';
+                      })()}
                     </span>
                     {event.actor_name && (
                       <span className="text-xs text-slate-400">by {event.actor_name}</span>

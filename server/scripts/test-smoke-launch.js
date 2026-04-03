@@ -34,8 +34,13 @@ function ok(name, cond, detail = '') {
 async function run() {
   console.log('\n=== Smoke: Launch Test Instance → Dashboard / Handbook / Policies ===\n');
 
+  const saPassword = process.env.SUPER_ADMIN_PASSWORD;
+  if (!saPassword || saPassword.length < 8) {
+    console.error('Set SUPER_ADMIN_PASSWORD in the environment (8+ characters).');
+    console.error('Example: SUPER_ADMIN_PASSWORD=YourPass123! node scripts/test-smoke-launch.js');
+    process.exit(1);
+  }
   const saEmail = process.env.SUPER_ADMIN_EMAIL || 'mccarthy.amyg@gmail.com';
-  const saPassword = process.env.SUPER_ADMIN_PASSWORD || 'PolicyVault2025!';
 
   // 1. Super admin login
   console.log('1. Super admin login...');

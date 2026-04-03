@@ -1,6 +1,7 @@
 /**
  * Seed super admin: mccarthy.amyg@gmail.com
  * Run: node scripts/seed-super-admin.js [password]
+ * Or: SUPER_ADMIN_PASSWORD=... node scripts/seed-super-admin.js (no argv)
  * If no password provided, generates a random one and prints it.
  */
 import Database from 'better-sqlite3';
@@ -27,7 +28,7 @@ CREATE TABLE IF NOT EXISTS super_admins (
   created_at TEXT DEFAULT (datetime('now'))
 )`);
 
-const password = process.argv[2];
+const password = process.argv[2] || process.env.SUPER_ADMIN_PASSWORD;
 const finalPassword = password && password.length >= 8
   ? password
   : uuidv4().slice(0, 12);
@@ -51,7 +52,7 @@ if (existing) {
 
 if (!password || password.length < 8) {
   console.log('\nGenerated password (save this):', finalPassword);
-  console.log('To set your own: node scripts/seed-super-admin.js YourPassword123');
+  console.log('To set your own: node scripts/seed-super-admin.js YourPassword123 or SUPER_ADMIN_PASSWORD=...');
 }
 
 db.close();

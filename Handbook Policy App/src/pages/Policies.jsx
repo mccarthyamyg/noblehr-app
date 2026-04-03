@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { format } from 'date-fns';
 
@@ -352,8 +352,10 @@ export default function Policies() {
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-indigo-600" /> Generate policy with AI
             </DialogTitle>
+            <DialogDescription>
+              Describe the policy you want. A draft will be created and opened in the editor.
+            </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-slate-500">Describe the policy you want. A draft will be created and opened in the editor.</p>
           <div className="space-y-2">
             <Label>What should this policy cover?</Label>
             <Textarea
@@ -392,8 +394,10 @@ export default function Policies() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Scan for missing policies</DialogTitle>
+            <DialogDescription>
+              Based on your current policies and org state/industry, these are often missing. Pick one to generate a draft.
+            </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-slate-500">Based on your current policies and org state/industry, these are often missing. Pick one to generate a draft.</p>
           {scanLoading && (
             <div className="flex items-center gap-2 py-4 text-slate-500">
               <Loader2 className="w-4 h-4 animate-spin" /> Scanning…
@@ -426,8 +430,10 @@ export default function Policies() {
         <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Import from handbook</DialogTitle>
+            <DialogDescription>
+              Paste your handbook text below. We’ll extract policies and create drafts.
+            </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-slate-500">Paste your handbook text below. We’ll extract policies and create drafts.</p>
           <Textarea
             placeholder="Paste full handbook text…"
             value={importText}

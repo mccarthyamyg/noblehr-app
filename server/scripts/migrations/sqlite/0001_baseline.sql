@@ -1,0 +1,2 @@
+-- Baseline marker: full schema from scripts/init-db.js.
+-- Future incremental DDL goes in 0002_*.sql, etc.

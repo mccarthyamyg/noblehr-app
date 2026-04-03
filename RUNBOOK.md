@@ -71,11 +71,15 @@ curl http://localhost:3001/api/health
 
 ## Smoke test (Launch flow)
 
-With the server running:
+With the server running, set the same `SUPER_ADMIN_PASSWORD` you used for `seed-super-admin` (or Railway secret):
 
 ```bash
-cd server && npm run test:smoke
+cd server && SUPER_ADMIN_PASSWORD=YourPass123! npm run test:smoke
 ```
+
+E2E: `SUPER_ADMIN_PASSWORD=YourPass123! npm run test:e2e`
+
+Optional one-time boot seed (local only): `AUTO_SEED_SUPER_ADMIN=true` and `SUPER_ADMIN_PASSWORD` in `.env` — **do not** enable in production unless you accept boot-time writes.
 
 Verifies: super admin login → ensure test org → launch token → GET /me, policies-for-employee, handbook-data, my-acknowledgments (Dashboard/Handbook/Policies would load in browser).
 

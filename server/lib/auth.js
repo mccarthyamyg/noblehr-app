@@ -7,9 +7,11 @@ import { db } from './db.js';
 const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'policyvault-dev-secret-change-in-production');
 const isProd = process.env.NODE_ENV === 'production';
 const COOKIE_ACCESS_TOKEN = 'pv_access_token';
+export const COOKIE_REFRESH_TOKEN = 'pv_refresh_token';
 const COOKIE_CSRF = 'pv_csrf_token';
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_DAYS = 7;
+const REFRESH_COOKIE_MAX_AGE_SEC = REFRESH_TOKEN_DAYS * 24 * 60 * 60;
 const CSRF_MAX_AGE_SEC = 60 * 60; // 1 hour
 if (process.env.NODE_ENV === 'production' && !JWT_SECRET) {
   console.error('FATAL: JWT_SECRET must be set in production');
@@ -41,13 +43,18 @@ export function verifyToken(token) {
 function getCookieOptions(name, maxAgeSec) {
   const opts = { path: '/', sameSite: 'strict', maxAge: maxAgeSec * 1000 };
   if (isProd) opts.secure = true;
-  if (name === COOKIE_ACCESS_TOKEN) opts.httpOnly = true;
+  if (name === COOKIE_ACCESS_TOKEN || name === COOKIE_REFRESH_TOKEN) opts.httpOnly = true;
   return opts;
 }
 
 export function setAuthCookie(res, token) {
   const maxAgeSec = 15 * 60; // 15 min to match access token
   res.cookie(COOKIE_ACCESS_TOKEN, token, getCookieOptions(COOKIE_ACCESS_TOKEN, maxAgeSec));
+}
+
+/** Web only: httpOnly refresh cookie (survives full page reload). */
+export function setRefreshCookie(res, refreshTokenValue) {
+  res.cookie(COOKIE_REFRESH_TOKEN, refreshTokenValue, getCookieOptions(COOKIE_REFRESH_TOKEN, REFRESH_COOKIE_MAX_AGE_SEC));
 }
 
 function hashRefreshToken(token) {
@@ -86,6 +93,15 @@ export function revokeAllRefreshTokensForUser(userType, userId) {
 
 export function clearAuthCookie(res) {
   res.clearCookie(COOKIE_ACCESS_TOKEN, { path: '/' });
+}
+
+export function clearRefreshCookie(res) {
+  res.clearCookie(COOKIE_REFRESH_TOKEN, { path: '/' });
+}
+
+export function clearSessionCookies(res) {
+  clearAuthCookie(res);
+  clearRefreshCookie(res);
 }
 
 export function authMiddleware(req, res, next) {
