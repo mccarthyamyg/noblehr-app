@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
   } : undefined,
 });
 
-const FROM = process.env.SMTP_FROM || 'Noble HR <noreply@policyvault.app>';
+const FROM = process.env.SMTP_FROM || 'Noble HR <noreply@noblehr.app>';
 const isConfigured = !!process.env.SMTP_HOST;
 
 export async function sendEmail({ to, subject, html, text }) {

@@ -1,5 +1,5 @@
 /**
- * PolicyVault HR Governance Platform - Backend Server
+ * Noble HR Governance Platform - Backend Server
  * Node.js + Express + SQLite
  */
 import express from 'express';
@@ -147,7 +147,7 @@ function maybeAutoSeedSuperAdmin() {
 }
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`PolicyVault server running on http://0.0.0.0:${PORT}`);
+  console.log(`Noble HR server running on http://0.0.0.0:${PORT}`);
   console.log('Run "node scripts/init-db.js" first if database does not exist.');
   runStartupMigrations();
   maybeAutoSeedSuperAdmin();

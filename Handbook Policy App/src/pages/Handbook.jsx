@@ -291,7 +291,7 @@ export default function Handbook() {
                                     ) : (
                                       <ChevronRight className="w-4 h-4 text-slate-400" />
                                     )}
-                                    <FileText className="w-4 h-4 text-indigo-600" />
+                                    <FileText className="w-4 h-4 text-noble" />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
@@ -418,7 +418,7 @@ export default function Handbook() {
                                ) : (
                                  <ChevronRight className="w-4 h-4 text-slate-400" />
                                )}
-                               <FileText className="w-4 h-4 text-indigo-600" />
+                               <FileText className="w-4 h-4 text-noble" />
                              </div>
                              <div className="flex-1 min-w-0">
                                <div className="flex items-center gap-2">

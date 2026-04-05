@@ -140,7 +140,7 @@ export default function Incidents() {
         title="Incident Reports"
         description={isAdmin ? "Review and manage all incident reports" : "Submit and track your incident reports"}
         actions={
-          <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowAdd(true)}>
+          <Button className="bg-noble hover:bg-noble-dark" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> Report Incident
           </Button>
         }
@@ -269,7 +269,7 @@ export default function Incidents() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={submitIncident} disabled={saving || !form.title || !form.description}>
+            <Button className="bg-noble hover:bg-noble-dark" onClick={submitIncident} disabled={saving || !form.title || !form.description}>
               {saving ? 'Submitting...' : 'Submit Report'}
             </Button>
           </DialogFooter>
@@ -341,7 +341,7 @@ function IncidentDetailDialog({ incident, isAdmin, org, amendments, onClose, onS
               <div className="border-t pt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs uppercase tracking-wide text-slate-600 font-medium">Admin Follow-Up Notes</Label>
-                  <button onClick={() => setEditingField(editingField === 'admin_notes' ? null : 'admin_notes')} className="text-xs text-indigo-600 hover:text-indigo-700">
+                  <button onClick={() => setEditingField(editingField === 'admin_notes' ? null : 'admin_notes')} className="text-xs text-noble hover:text-indigo-700">
                     {editingField === 'admin_notes' ? 'Cancel' : 'Edit'}
                   </button>
                 </div>
@@ -426,7 +426,7 @@ function IncidentEditField({ incident, field, org, onSave }) {
       </div>
       <div className="flex gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={() => setValue(incident[field] || '')}>Reset</Button>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" size="sm" onClick={handleSave} disabled={saving || value === incident[field]}>
+        <Button className="bg-noble hover:bg-noble-dark" size="sm" onClick={handleSave} disabled={saving || value === incident[field]}>
           {saving ? 'Saving...' : 'Save Amendment'}
         </Button>
       </div>

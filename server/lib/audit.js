@@ -5,7 +5,7 @@
 import { randomUUID } from 'crypto';
 import { getDrizzlePg } from './db-pg.js';
 import { loggedActions } from '../db/schema.js';
-import { db } from './db.js';
+import { db } from './db-pg-adapter.js';
 
 /**
  * Log an action to the audit trail. When running on PostgreSQL, writes to audit.logged_actions.
@@ -47,11 +47,11 @@ export async function logAudit({ organizationId, actorEmail, actorId, action, en
   const metadata = [oldData, newData].some(Boolean) ? JSON.stringify({ oldData: oldData ?? null, newData: newData ?? null }) : null;
   const ip = req?.ip || req?.connection?.remoteAddress || null;
   const clientType = (req?.get?.('x-client-type') || '').toLowerCase();
-  const app_source = clientType.includes('mobile') || clientType.includes('expo') ? 'policyvault_mobile' : 'policyvault_web';
+  const app_source = clientType.includes('mobile') || clientType.includes('expo') ? 'noblehr_mobile' : 'noblehr_web';
   const old_value = oldData != null ? JSON.stringify(oldData) : null;
   const new_value = newData != null ? JSON.stringify(newData) : null;
   try {
-    db.prepare(
+    await db.prepare(
       `INSERT INTO system_events (id, organization_id, event_type, entity_type, entity_id, actor_email, summary, metadata, ip_address, device_id, app_source, old_value, new_value)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
@@ -69,7 +69,7 @@ export async function logAudit({ organizationId, actorEmail, actorId, action, en
       old_value,
       new_value
     );
-  } catch (_) {
-    // ignore if table or insert fails (e.g. dev without init-db)
+  } catch (err) {
+    console.error('[audit] SQLite write failed:', err.message);
   }
 }

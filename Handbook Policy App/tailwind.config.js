@@ -59,7 +59,20 @@ module.exports = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			noble: {
+  			  light: 'hsl(var(--noble-blue-light))',
+  			  DEFAULT: 'hsl(var(--noble-blue-base))',
+  			  dark: 'hsl(var(--noble-blue-dark))'
+  			},
+  			appaccent: {
+  			  light: 'hsl(var(--app-accent-light))',
+  			  DEFAULT: 'hsl(var(--app-accent))',
+  			  dark: 'hsl(var(--app-accent-dark))'
   			}
+  		},
+  		fontFamily: {
+  		  sans: ['Inter', 'sans-serif'],
   		},
   		keyframes: {
   			'accordion-down': {

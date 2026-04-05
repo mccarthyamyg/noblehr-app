@@ -3,7 +3,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dbPath = join(__dirname, '..', 'data', 'policyvault.db');
+const dbPath = join(__dirname, '..', 'data', 'noblehr.db');
 
 export const db = new Database(dbPath);
 db.pragma('foreign_keys = ON');

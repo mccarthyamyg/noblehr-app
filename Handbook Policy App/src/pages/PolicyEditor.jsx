@@ -89,7 +89,7 @@ export default function PolicyEditor() {
     }
     // Refresh org to get latest settings
     refreshOrg().then(loadData);
-  }, [org, isAdmin]);
+  }, [org?.id, isAdmin]);
 
   async function loadData() {
     const [locsRes, ...policyRes] = await Promise.all([
@@ -564,7 +564,7 @@ ${safeContent}
           <CardContent className="p-6">
             <Button 
               onClick={() => setGeneratorDialogOpen(true)} 
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              className="w-full bg-noble hover:bg-noble-dark"
               size="lg"
             >
               ✨ Smart Generator
@@ -908,7 +908,7 @@ ${safeContent}
               <Save className="w-4 h-4 mr-2" /> {saving ? 'Saving...' : 'Save Now'}
             </Button>
             <Button
-              className="bg-indigo-600 hover:bg-indigo-700"
+              className="bg-noble hover:bg-noble-dark"
               onClick={() => policy ? setPublishDialog(true) : null}
               disabled={saving || !form.title || !policy}
             >
@@ -943,7 +943,7 @@ ${safeContent}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPublishDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={publishPolicy} disabled={saving}>
+            <Button className="bg-noble hover:bg-noble-dark" onClick={publishPolicy} disabled={saving}>
               {saving ? 'Publishing...' : 'Create Version & Publish'}
             </Button>
           </DialogFooter>

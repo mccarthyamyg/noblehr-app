@@ -11,7 +11,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
+
+function safeFormatDate(raw, fmt = 'MMMM d, yyyy') {
+  if (!raw) return '—';
+  // Handle space-separated timestamps from SQLite (e.g. "2026-04-05 00:10:55")
+  const normalized = typeof raw === 'string' ? raw.replace(' ', 'T') : raw;
+  const d = new Date(normalized);
+  return isValid(d) ? format(d, fmt) : '—';
+}
 
 export default function PolicyView() {
   const { org, employee } = useOrg();
@@ -43,13 +51,17 @@ export default function PolicyView() {
       return;
     }
 
-    const { policy: loadedPolicy, currentVersion: cv, acknowledgment, pending_re_acknowledgment, location: loc } = result.data;
+    const { policy: loadedPolicy } = result.data;
 
+    // Backend nests currentVersion inside the policy object
+    const cv = loadedPolicy?.currentVersion || null;
     setPolicy(loadedPolicy);
-    setCurrentVersion(cv || null);
-    setLocation(loc || null);
-    setPendingReAck(pending_re_acknowledgment || null);
+    setCurrentVersion(cv);
+    setLocation(result.data.location || null);
+    setPendingReAck(result.data.pending_re_acknowledgment || null);
 
+    // Check for existing acknowledgment (may come from a separate call or be embedded)
+    const acknowledgment = result.data.acknowledgment || null;
     if (acknowledgment && cv && acknowledgment.policy_version_id === cv.id) {
       setAck(acknowledgment);
     }
@@ -88,7 +100,7 @@ export default function PolicyView() {
     <div>
       <PageHeader
         title={policy.title}
-        description={`Version ${currentVersion?.version_number || 1} · ${format(new Date(policy.created_date), 'MMMM d, yyyy')}`}
+        description={`Version ${currentVersion?.version_number || 1} · ${safeFormatDate(policy.created_at || policy.created_date)}`}
         actions={
           <Link to={createPageUrl('Policies')}>
             <Button variant="outline" size="sm"><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
@@ -168,7 +180,7 @@ export default function PolicyView() {
                   <div>
                     <p className="text-sm font-semibold text-emerald-800">You acknowledged this policy</p>
                     <p className="text-xs text-emerald-600 mt-0.5">
-                      {format(new Date(ack.acknowledged_at || ack.created_date), 'MMMM d, yyyy \'at\' h:mm a')}
+                      {safeFormatDate(ack.acknowledged_at || ack.created_date, "MMMM d, yyyy 'at' h:mm a")}
                       {ack.version_number && ` · Version ${ack.version_number}`}
                     </p>
                   </div>
@@ -187,17 +199,17 @@ export default function PolicyView() {
             ) : (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Shield className="w-5 h-5 text-indigo-600" />
+                  <Shield className="w-5 h-5 text-noble" />
                   <div>
                     <p className="text-sm font-semibold text-indigo-800">
                       Acknowledgment Required
                     </p>
-                    <p className="text-xs text-indigo-600 mt-0.5">
-                      Please review the policy above and confirm your acknowledgment${policy.acknowledgment_deadline ? ` by ${format(new Date(policy.acknowledgment_deadline), 'MMMM d, yyyy')}` : ''}
+                    <p className="text-xs text-noble mt-0.5">
+                      Please review the policy above and confirm your acknowledgment${policy.acknowledgment_deadline ? ` by ${safeFormatDate(policy.acknowledgment_deadline)}` : ''}
                     </p>
                   </div>
                 </div>
-                <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setConfirmDialog(true)}>
+                <Button className="bg-noble hover:bg-noble-dark" onClick={() => setConfirmDialog(true)}>
                   <CheckCircle2 className="w-4 h-4 mr-2" /> Acknowledge
                 </Button>
               </div>
@@ -231,7 +243,7 @@ export default function PolicyView() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDialog(false)}>Cancel</Button>
-            <Button className={pendingReAck ? "bg-orange-600 hover:bg-orange-700" : "bg-indigo-600 hover:bg-indigo-700"} onClick={handleAcknowledge} disabled={acknowledging}>
+            <Button className={pendingReAck ? "bg-orange-600 hover:bg-orange-700" : "bg-noble hover:bg-noble-dark"} onClick={handleAcknowledge} disabled={acknowledging}>
               {acknowledging ? 'Recording...' : pendingReAck ? 'I Re-acknowledge & Accept' : 'I Acknowledge & Accept'}
             </Button>
           </DialogFooter>

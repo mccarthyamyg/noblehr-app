@@ -312,7 +312,7 @@ export default function Policies() {
               <FileText className="w-4 h-4 mr-2" /> Import from handbook
             </Button>
             <Link to={createPageUrl('PolicyEditor')}>
-              <Button className="bg-indigo-600 hover:bg-indigo-700">
+              <Button className="bg-noble hover:bg-noble-dark">
                 <Plus className="w-4 h-4 mr-2" /> New Policy
               </Button>
             </Link>
@@ -350,7 +350,7 @@ export default function Policies() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-600" /> Generate policy with AI
+              <Sparkles className="w-5 h-5 text-noble" /> Generate policy with AI
             </DialogTitle>
             <DialogDescription>
               Describe the policy you want. A draft will be created and opened in the editor.
@@ -514,7 +514,7 @@ export default function Policies() {
                     <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                       <span>v{policy.current_version || 1}</span>
                       <span>·</span>
-                      <span>{format(new Date(policy.created_date), 'MMM d, yyyy')}</span>
+                      <span>{(() => { try { return format(new Date(policy.created_date || policy.created_at || policy.updated_at), 'MMM d, yyyy'); } catch { return '—'; } })()}</span>
                       {policy.tags?.length > 0 && (
                         <>
                           <span>·</span>

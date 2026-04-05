@@ -19,7 +19,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 export default function HRRecords() {
   const { user } = useAuth();
@@ -158,7 +158,7 @@ export default function HRRecords() {
         title="HR Records"
         description="Confidential employee records and documentation"
         actions={
-          <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowAdd(true)}>
+          <Button className="bg-noble hover:bg-noble-dark" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> New Record
           </Button>
         }
@@ -223,7 +223,7 @@ export default function HRRecords() {
                     </div>
                   </TableCell>
                   <TableCell><StatusBadge status={rec.severity} /></TableCell>
-                  <TableCell className="text-xs text-slate-500">{format(new Date(rec.created_date), 'MMM d, yyyy')}</TableCell>
+                  <TableCell className="text-xs text-slate-500">{(() => { const d = new Date(rec.created_date ?? rec.created_at); return isValid(d) ? format(d, 'MMM d, yyyy') : '—'; })()}</TableCell>
                   <TableCell className="text-xs text-slate-500">{rec.recorded_by_name}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" onClick={() => setShowDetail(rec)}>
@@ -329,7 +329,7 @@ export default function HRRecords() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={saveRecord} disabled={saving || !form.employee_id || !form.title}>
+            <Button className="bg-noble hover:bg-noble-dark" onClick={saveRecord} disabled={saving || !form.employee_id || !form.title}>
               {saving ? 'Saving...' : 'Create Record'}
             </Button>
           </DialogFooter>
@@ -406,14 +406,14 @@ export default function HRRecords() {
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm border-b pb-4">
                 <div><span className="text-slate-500">Employee:</span> <span className="font-medium">{showDetail.employee_name}</span></div>
-                <div><span className="text-slate-500">Created:</span> <span className="font-medium">{format(new Date(showDetail.created_date), 'MMM d, yyyy h:mm a')}</span></div>
+                <div><span className="text-slate-500">Created:</span> <span className="font-medium">{(() => { const d = new Date(showDetail.created_date ?? showDetail.created_at); return isValid(d) ? format(d, 'MMM d, yyyy h:mm a') : '—'; })()}</span></div>
                 <div><span className="text-slate-500">Recorded By:</span> <span className="font-medium">{showDetail.recorded_by_name}</span></div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs uppercase tracking-wide text-slate-600">Details</Label>
-                  <button onClick={() => setEditingField(editingField === 'description' ? null : 'description')} className="text-xs text-indigo-600 hover:text-indigo-700">
+                  <button onClick={() => setEditingField(editingField === 'description' ? null : 'description')} className="text-xs text-noble hover:text-indigo-700">
                     {editingField === 'description' ? 'Cancel' : 'Edit'}
                   </button>
                 </div>

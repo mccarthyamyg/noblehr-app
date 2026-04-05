@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from '@/api/client';
-import { base44 } from '@/api/base44Client';
 
 export default function SmartGeneratorDialog({ open, onOpenChange, onGenerate, hasExistingContent, organization, orgId, userEmail }) {
   const [mode, setMode] = useState(hasExistingContent ? 'topic' : 'guided');
@@ -33,11 +32,11 @@ export default function SmartGeneratorDialog({ open, onOpenChange, onGenerate, h
 
   const checkGuard = async () => {
     if (!orgId) return true; // Skip guard if not provided
-    const guard = await base44.functions.invoke('guardAiUsage', {
+    const guard = await api.invoke('guardAiUsage', {
       organization_id: orgId
     });
-    if (!guard.data.allowed) {
-      alert(guard.data.message);
+    if (!guard?.allowed && guard?.data?.allowed !== true) {
+      alert(guard?.message || guard?.data?.message || 'AI generation is not allowed or limit reached.');
       return false;
     }
     return true;

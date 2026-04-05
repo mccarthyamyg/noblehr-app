@@ -197,7 +197,7 @@ export default function MyOnboardingPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewDialog(false)}>Cancel</Button>
             <Button 
-              className="bg-indigo-600 hover:bg-indigo-700"
+              className="bg-noble hover:bg-noble-dark"
               onClick={() => acknowledgePolicy(selectedPolicy)}
             >
               <CheckCircle2 className="w-4 h-4 mr-2" />

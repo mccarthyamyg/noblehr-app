@@ -105,7 +105,7 @@ export default function AIHandbookGenerator() {
   if (step === 3) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-6">
-        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+        <Loader2 className="w-10 h-10 text-noble animate-spin" />
         <div className="text-center">
           <p className="text-lg font-semibold text-slate-800">Generating policies…</p>
           <p className="text-sm text-slate-500 mt-1">Creating draft policies. This may take a minute.</p>
@@ -139,7 +139,7 @@ export default function AIHandbookGenerator() {
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-600" />
+              <Sparkles className="w-5 h-5 text-noble" />
               Recommended policies
             </CardTitle>
             <CardDescription>
@@ -169,7 +169,7 @@ export default function AIHandbookGenerator() {
             {error && <p className="text-sm text-red-600">{error}</p>}
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-              <Button onClick={generateSelected} disabled={selectedTitles.size === 0} className="bg-indigo-600 hover:bg-indigo-700">
+              <Button onClick={generateSelected} disabled={selectedTitles.size === 0} className="bg-noble hover:bg-noble-dark">
                 <Sparkles className="w-4 h-4 mr-2" /> Generate selected ({selectedTitles.size})
               </Button>
             </div>
@@ -188,7 +188,7 @@ export default function AIHandbookGenerator() {
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-indigo-600" />
+            <Sparkles className="w-5 h-5 text-noble" />
             Step 1 — Tell us about your business
           </CardTitle>
           <CardDescription>
@@ -231,7 +231,7 @@ export default function AIHandbookGenerator() {
           <Button
             onClick={fetchRecommendations}
             disabled={recommendLoading || !name.trim() || !industry || !state?.trim()}
-            className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700"
+            className="w-full gap-2 bg-noble hover:bg-noble-dark"
           >
             {recommendLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
             Get recommended policies
@@ -241,3 +241,4 @@ export default function AIHandbookGenerator() {
     </div>
   );
 }
+

@@ -5,7 +5,7 @@ import { useOrg } from '../components/hooks/useOrganization';
 import { createPageUrl } from '../utils';
 import PageHeader from '../components/shared/PageHeader';
 import StatusBadge from '../components/shared/StatusBadge';
-import { ArrowLeft, Mail, MapPin, Briefcase, Calendar, AlertCircle, FileWarning, Download, FileUp, FileText, Trash2 } from 'lucide-react';
+import { ArrowLeft, Mail, MapPin, Briefcase, Calendar, AlertCircle, FileWarning, Download, FileUp, FileText, Trash2, UserMinus } from 'lucide-react';
 import { usePermissions } from '../components/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,6 +48,7 @@ export default function EmployeeProfile() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
   const fileInputRef = useRef(null);
 
   const params = new URLSearchParams(window.location.search);
@@ -87,6 +88,24 @@ export default function EmployeeProfile() {
     } catch (e) {
       console.error(e);
       alert(e?.data?.error || e?.message || 'Export failed');
+    }
+  }
+
+  async function deactivateEmployee() {
+    if (!confirm(`Are you sure you want to deactivate ${employee.full_name}? They will lose access to the platform immediately. Their file will be preserved for re-hire.`)) return;
+    setDeactivating(true);
+    try {
+      await api.invoke('secureEmployeeWrite', {
+        action: 'terminate',
+        organization_id: org.id,
+        employee_id: employeeId,
+      });
+      alert(`${employee.full_name} has been deactivated.`);
+      loadData();
+    } catch (e) {
+      alert(e?.data?.error || e?.message || 'Deactivation failed');
+    } finally {
+      setDeactivating(false);
     }
   }
 
@@ -158,6 +177,11 @@ export default function EmployeeProfile() {
                 <Button variant="outline" size="sm" onClick={() => setShowWriteUp(true)}>
                   <FileWarning className="w-4 h-4 mr-1" /> Create Write-Up
                 </Button>
+                {employee.status === 'active' && employee.permission_level !== 'org_admin' && (
+                  <Button variant="destructive" size="sm" onClick={deactivateEmployee} disabled={deactivating}>
+                    <UserMinus className="w-4 h-4 mr-1" /> {deactivating ? 'Deactivating...' : 'Deactivate'}
+                  </Button>
+                )}
               </>
             )}
           </div>

@@ -1,7 +1,7 @@
 /**
- * PolicyVault — SQLite database backup (Phase 4.5)
+ * Noble HR — SQLite database backup (Phase 4.5)
  *
- * Creates a timestamped copy of policyvault.db in server/data/backups/,
+ * Creates a timestamped copy of noblehr.db in server/data/backups/,
  * then applies retention (keeps last N backups by default).
  * Uses a read-only connection so backup can run while the server is running.
  *
@@ -13,7 +13,7 @@
  *   BACKUP_RETENTION_COUNT — keep this many backups (default 7)
  *   BACKUP_DIR — override backup directory (default server/data/backups)
  *
- * Restore: stop the app, replace server/data/policyvault.db with a backup file, restart.
+ * Restore: stop the app, replace server/data/noblehr.db with a backup file, restart.
  * For production: copy backup files to S3/R2 or another store (cron or separate job).
  */
 import Database from 'better-sqlite3';
@@ -23,7 +23,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(__dirname, '..', 'data');
-const dbPath = join(dataDir, 'policyvault.db');
+const dbPath = join(dataDir, 'noblehr.db');
 const defaultBackupDir = join(dataDir, 'backups');
 const retentionCount = Math.max(1, parseInt(process.env.BACKUP_RETENTION_COUNT || '7', 10));
 const backupDir = process.env.BACKUP_DIR || defaultBackupDir;
@@ -31,7 +31,7 @@ const backupDir = process.env.BACKUP_DIR || defaultBackupDir;
 async function run() {
   mkdirSync(backupDir, { recursive: true });
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const filename = join(backupDir, `policyvault-${timestamp}.db`);
+  const filename = join(backupDir, `noblehr-${timestamp}.db`);
 
   const db = new Database(dbPath, { readonly: true });
   try {
@@ -47,7 +47,7 @@ async function run() {
   // Retention: keep only the last BACKUP_RETENTION_COUNT files (by mtime)
   try {
     const files = readdirSync(backupDir)
-      .filter((f) => f.startsWith('policyvault-') && f.endsWith('.db'))
+      .filter((f) => f.startsWith('noblehr-') && f.endsWith('.db'))
       .map((f) => ({
         name: f,
         path: join(backupDir, f),

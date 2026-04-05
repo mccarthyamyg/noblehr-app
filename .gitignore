@@ -1,8 +1,59 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
 
-PolicyVaultExpo/
+# Build outputs
+Handbook Policy App/dist/
+*.tsbuildinfo
 
-# Local runtime / secrets — do not deploy or merge
+# Environment & secrets
+.env
+.env.local
+.env.production
+server/.env
+
+# Database (runtime data, not source)
 server/data/*.db
+server/data/*.db-journal
+server/data/*.db-wal
 server/data/backups/
 server/data/uploads/
+
+# Logs & debug output
+server/err.log
+server/error.log
+server/out.txt
 server/out2.txt
+server/fix_results.txt
+server/policy_state.txt
+server/salty_state.txt
+server/schema_out.txt
+*.log
+
+# Local dev / test artifacts
+login_test*.txt
+railway_auth.txt
+railway_projects.txt
+railway_status.txt
+token_check.txt
+gitlog.txt
+gitstatus.txt
+
+# Expo / React Native
+PolicyVaultExpo/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Gemini / AI tooling (local only)
+.gemini/
+.agents/

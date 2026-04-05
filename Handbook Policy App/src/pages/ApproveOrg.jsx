@@ -64,7 +64,7 @@ export default function ApproveOrg() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
-        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+        <Loader2 className="w-10 h-10 text-noble animate-spin" />
       </div>
     );
   }
@@ -130,7 +130,7 @@ export default function ApproveOrg() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-noble to-noble-dark flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-7 h-7 text-white" />
           </div>
           <CardTitle>Approve Organization</CardTitle>
@@ -169,3 +169,4 @@ export default function ApproveOrg() {
     </div>
   );
 }
+

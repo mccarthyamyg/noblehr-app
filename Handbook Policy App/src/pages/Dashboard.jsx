@@ -145,21 +145,21 @@ export default function Dashboard() {
 
       {/* Employee onboarding alert */}
       {myOnboarding && (
-        <Card className="mb-6 border-indigo-200 bg-indigo-50/50">
+        <Card className="mb-6 border-appaccent/30 bg-appaccent-light/30">
           <CardContent className="py-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-indigo-600" />
+              <div className="w-10 h-10 rounded-lg bg-appaccent-light flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-appaccent-dark" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-indigo-900">Complete Your Onboarding</p>
-                <p className="text-xs text-indigo-700 mt-0.5">
+                <p className="text-sm font-semibold text-slate-900">Complete Your Onboarding</p>
+                <p className="text-xs text-slate-600 mt-0.5">
                   {(myOnboarding.completed_policy_ids?.length || 0)} of {myOnboarding.assigned_policy_ids.length} policies acknowledged
                 </p>
               </div>
             </div>
             <Link to={createPageUrl('MyOnboarding')}>
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+              <button className="px-4 py-2 bg-noble hover:bg-noble-dark text-white rounded-lg text-sm font-medium transition-colors">
                 Continue
               </button>
             </Link>
@@ -195,7 +195,7 @@ export default function Dashboard() {
                     <p className="text-sm font-medium text-slate-900">{p.title}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{p.description}</p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-noble transition-colors" />
                 </Link>
               ))}
             </div>
@@ -229,7 +229,7 @@ export default function Dashboard() {
             <div className="space-y-3">
               {stats.recentEvents.map(event => (
                 <div key={event.id} className="flex items-start gap-3 text-sm">
-                  <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                  <div className="w-2 h-2 rounded-full bg-appaccent mt-1.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-slate-700">{event.summary}</p>
                     <p className="text-xs text-slate-400 mt-0.5">

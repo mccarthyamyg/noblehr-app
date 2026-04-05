@@ -143,7 +143,7 @@ export default function Employees() {
             <Button variant="outline" onClick={() => { setShowInvite(true); setInviteLink(null); setInviteForm({ email: '', full_name: '', role: '', location_id: '' }); }}>
               <Send className="w-4 h-4 mr-2" /> Invite by Email
             </Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={openNew}>
+            <Button className="bg-noble hover:bg-noble-dark" onClick={openNew}>
               <Plus className="w-4 h-4 mr-2" /> Add Employee
             </Button>
           </div>
@@ -156,7 +156,7 @@ export default function Employees() {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState icon={Users} title="No employees yet" description="Add your first employee to get started" action={<Button className="bg-indigo-600 hover:bg-indigo-700" onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Add Employee</Button>} />
+        <EmptyState icon={Users} title="No employees yet" description="Add your first employee to get started" action={<Button className="bg-noble hover:bg-noble-dark" onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Add Employee</Button>} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(emp => (
@@ -282,7 +282,7 @@ export default function Employees() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={saveEmployee} disabled={saving || !form.full_name}>
+            <Button className="bg-noble hover:bg-noble-dark" onClick={saveEmployee} disabled={saving || !form.full_name}>
               {saving ? 'Saving...' : editEmployee ? 'Update' : 'Add Employee'}
             </Button>
           </DialogFooter>
@@ -331,7 +331,7 @@ export default function Employees() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowInvite(false)}>Cancel</Button>
-                <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={async () => {
+                <Button className="bg-noble hover:bg-noble-dark" onClick={async () => {
                   setInviteSaving(true);
                   try {
                     const res = await api.invites.create({ ...inviteForm, organization_id: org.id });
@@ -362,7 +362,7 @@ export default function Employees() {
               <p className="text-xs text-slate-500">Link expires in 7 days. You can also send this via email manually.</p>
               <DialogFooter>
                 <Button variant="outline" onClick={() => { setInviteLink(null); setInviteForm({ email: '', full_name: '', role: '', location_id: '' }); }}>Invite Another</Button>
-                <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowInvite(false)}>Done</Button>
+                <Button className="bg-noble hover:bg-noble-dark" onClick={() => setShowInvite(false)}>Done</Button>
               </DialogFooter>
             </div>
           )}

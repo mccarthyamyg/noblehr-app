@@ -15,7 +15,7 @@ export default function ForgotEmail() {
           </div>
           <CardTitle>Forgot Email?</CardTitle>
           <p className="text-slate-500 text-sm mt-1">
-            Contact your organization administrator to recover your account email. If you signed up and your organization was rejected, you can <Link to={createPageUrl('RequestApprovalAgain')} className="text-indigo-600 hover:underline">request approval again</Link>.
+            Contact your organization administrator to recover your account email. If you signed up and your organization was rejected, you can <Link to={createPageUrl('RequestApprovalAgain')} className="text-noble hover:underline">request approval again</Link>.
           </p>
         </CardHeader>
         <CardContent className="text-center">
@@ -27,3 +27,4 @@ export default function ForgotEmail() {
     </div>
   );
 }
+

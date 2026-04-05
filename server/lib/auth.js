@@ -2,9 +2,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { randomBytes, createHash } from 'crypto';
-import { db } from './db.js';
+import { db } from './db-pg-adapter.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'policyvault-dev-secret-change-in-production');
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'noblehr-dev-secret-change-in-production');
 const isProd = process.env.NODE_ENV === 'production';
 const COOKIE_ACCESS_TOKEN = 'pv_access_token';
 export const COOKIE_REFRESH_TOKEN = 'pv_refresh_token';
@@ -65,28 +65,28 @@ export function createRefreshTokenValue() {
   return randomBytes(64).toString('hex');
 }
 
-export function storeRefreshToken(userType, userId, tokenValue, expiresAt) {
+export async function storeRefreshToken(userType, userId, tokenValue, expiresAt) {
   const id = uuidv4();
   const hash = hashRefreshToken(tokenValue);
-  db.prepare(
+  await db.prepare(
     'INSERT INTO refresh_tokens (id, user_type, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?, ?)'
   ).run(id, userType, userId, hash, expiresAt);
   return id;
 }
 
-export function findRefreshTokenByValue(tokenValue) {
+export async function findRefreshTokenByValue(tokenValue) {
   const hash = hashRefreshToken(tokenValue);
-  return db.prepare(
+  return await db.prepare(
     'SELECT * FROM refresh_tokens WHERE token_hash = ? AND revoked_at IS NULL'
   ).get(hash);
 }
 
-export function markRefreshTokenUsed(id) {
-  db.prepare('UPDATE refresh_tokens SET used_at = ? WHERE id = ?').run(new Date().toISOString(), id);
+export async function markRefreshTokenUsed(id) {
+  await db.prepare('UPDATE refresh_tokens SET used_at = ? WHERE id = ?').run(new Date().toISOString(), id);
 }
 
-export function revokeAllRefreshTokensForUser(userType, userId) {
-  db.prepare(
+export async function revokeAllRefreshTokensForUser(userType, userId) {
+  await db.prepare(
     'UPDATE refresh_tokens SET revoked_at = ? WHERE user_type = ? AND user_id = ?'
   ).run(new Date().toISOString(), userType, userId);
 }
@@ -104,7 +104,7 @@ export function clearSessionCookies(res) {
   clearRefreshCookie(res);
 }
 
-export function authMiddleware(req, res, next) {
+export async function authMiddleware(req, res, next) {
   let token = req.cookies?.[COOKIE_ACCESS_TOKEN] || null;
   if (!token) {
     const auth = req.headers.authorization;
@@ -120,30 +120,32 @@ export function authMiddleware(req, res, next) {
   if (payload.isSuperAdmin) {
     const emailNorm = (payload.email || '').trim().toLowerCase();
     if (!emailNorm) return res.status(401).json({ error: 'Invalid token' });
-    const superAdmin = db.prepare('SELECT * FROM super_admins WHERE LOWER(email) = ?').get(emailNorm);
+    const superAdmin = await db.prepare('SELECT * FROM super_admins WHERE LOWER(email) = ?').get(emailNorm);
     if (!superAdmin) return res.status(401).json({ error: 'Super admin not found' });
-    req.user = superAdmin;
+    const { password_hash: _saph, ...safeSuperAdmin } = superAdmin;
+    req.user = safeSuperAdmin;
     req.superAdmin = true;
     req.impersonateOrgId = payload.impersonateOrgId || null;
     return next();
   }
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(payload.userId);
+  const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(payload.userId);
   if (!user) {
     return res.status(401).json({ error: 'User not found' });
   }
-  req.user = user;
+  const { password_hash: _uph, ...safeUser } = user;
+  req.user = safeUser;
   req.superAdmin = false;
   next();
 }
 
-export function getEmployeeByEmail(organizationId, email) {
-  return db.prepare(
+export async function getEmployeeByEmail(organizationId, email) {
+  return await db.prepare(
     'SELECT * FROM employees WHERE organization_id = ? AND user_email = ? AND deleted_at IS NULL'
   ).get(organizationId, email);
 }
 
-export function getOrgContextByOrgId(orgId) {
-  const emp = db.prepare(
+export async function getOrgContextByOrgId(orgId) {
+  const emp = await db.prepare(
     `SELECT e.*, o.name as org_name, o.industry as org_industry, o.settings as org_settings, o.state as org_state, o.employee_count as org_employee_count FROM employees e JOIN organizations o ON e.organization_id = o.id WHERE e.organization_id = ? AND e.status = 'active' ORDER BY CASE WHEN e.permission_level = 'org_admin' THEN 0 ELSE 1 END LIMIT 1`
   ).get(orgId);
   if (!emp) return { org: null, employee: null };
@@ -175,10 +177,10 @@ export function getOrgContextByOrgId(orgId) {
   return { org, employee };
 }
 
-export function getEmployeeContext(userEmail) {
+export async function getEmployeeContext(userEmail) {
   if (!userEmail || typeof userEmail !== 'string') return { org: null, employee: null };
   const emailNorm = userEmail.trim().toLowerCase();
-  const emp = db.prepare(
+  const emp = await db.prepare(
     'SELECT e.*, o.name as org_name, o.industry as org_industry, o.settings as org_settings, o.state as org_state, o.employee_count as org_employee_count FROM employees e JOIN organizations o ON e.organization_id = o.id WHERE LOWER(TRIM(e.user_email)) = ? AND e.status = ? AND e.deleted_at IS NULL ORDER BY CASE WHEN e.permission_level = \'org_admin\' THEN 0 ELSE 1 END LIMIT 1'
   ).get(emailNorm, 'active');
   if (!emp) return { org: null, employee: null };

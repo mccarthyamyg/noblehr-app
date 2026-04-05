@@ -1,5 +1,5 @@
 /**
- * Noble HR API client (PolicyVault backend) — replaces Base44
+ * Noble HR API client (Noble HR backend) — replaces Base44
  * All API calls go through this client.
  * Web: cookie-only auth (httpOnly pv_access_token). No localStorage for tokens (Truth #172).
  * Uses credentials: 'include'; sends X-CSRF-Token on state-changing requests.
@@ -18,13 +18,25 @@ function setRefreshToken(token) {
   refreshTokenInMemory = token || null;
 }
 
+let csrfPromise = null;
+
 /** Fetch and cache CSRF token for double-submit (cookie is set by server, we send same value in header). */
 async function ensureCsrf() {
   if (csrfToken) return csrfToken;
-  const r = await fetch(`${API_BASE}/auth/csrf`, { method: 'GET', credentials: 'include' });
-  const d = await r.json().catch(() => ({}));
-  if (d.csrf) csrfToken = d.csrf;
-  return csrfToken;
+  if (csrfPromise) return csrfPromise;
+
+  csrfPromise = (async () => {
+    try {
+      const r = await fetch(`${API_BASE}/auth/csrf`, { method: 'GET', credentials: 'include' });
+      const d = await r.json().catch(() => ({}));
+      if (d.csrf) csrfToken = d.csrf;
+      return csrfToken;
+    } finally {
+      csrfPromise = null;
+    }
+  })();
+  
+  return csrfPromise;
 }
 
 async function doRequest(path, options, skipRefresh) {

@@ -7,8 +7,8 @@ import { api } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2 } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { NobleHRWordmark } from '@/components/NobleHRLogo';
 import LegalFooter from '@/components/legal/LegalFooter';
 
 export default function Login() {
@@ -51,15 +51,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/60 via-white to-slate-50 flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-7 h-7 text-white" />
+      <Card className="w-full max-w-md shadow-xl shadow-blue-900/5 border-slate-200/80">
+        <CardHeader className="text-center pb-2">
+          <div className="mb-2">
+            <NobleHRWordmark iconSize="w-20 h-20" textSize="text-3xl" />
           </div>
-          <CardTitle className="text-2xl">Noble HR</CardTitle>
-          <p className="text-slate-500 text-sm mt-1">Sign in to your account</p>
+          <p className="text-slate-500 text-sm mt-2">Sign in to your account</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,7 +77,7 @@ export default function Login() {
             <div>
               <div className="flex justify-between items-center">
                 <Label htmlFor="password">Password</Label>
-                <Link to={createPageUrl('ForgotPassword')} className="text-xs text-indigo-600 hover:underline">Forgot password?</Link>
+                <Link to={createPageUrl('ForgotPassword')} className="text-xs text-blue-700 hover:underline">Forgot password?</Link>
               </div>
               <Input
                 id="password"
@@ -94,7 +93,7 @@ export default function Login() {
               <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
                 <p>{typeof authError === 'object' ? authError.text : authError}</p>
                 {typeof authError === 'object' && authError.link && (
-                  <Link to={createPageUrl(authError.link)} className="block mt-2 text-indigo-600 hover:underline">Request approval again →</Link>
+                  <Link to={createPageUrl(authError.link)} className="block mt-2 text-blue-700 hover:underline">Request approval again →</Link>
                 )}
                 {typeof authError === 'object' && authError.code === 'email_not_verified' && (
                   <div className="mt-2">
@@ -122,7 +121,7 @@ export default function Login() {
                 )}
               </div>
             )}
-            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#1d4ed8] hover:bg-[#1e3a8a] text-white shadow-lg shadow-blue-700/20" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
 
@@ -155,9 +154,21 @@ export default function Login() {
             )}
           </form>
           <p className="text-center text-sm text-slate-500 mt-4 space-y-1">
-            <span className="block">New? <Link to={createPageUrl('Setup')} className="text-indigo-600 hover:underline">Set up your organization</Link></span>
-            <span className="block"><Link to={createPageUrl('ForgotEmail')} className="text-indigo-600 hover:underline">Forgot email?</Link></span>
+            <span className="block">New? <Link to={createPageUrl('Setup')} className="text-blue-700 hover:underline font-medium">Set up your organization</Link></span>
+            <span className="block"><Link to={createPageUrl('ForgotEmail')} className="text-blue-700 hover:underline">Forgot email?</Link></span>
           </p>
+          <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+            <a
+              href="/demo.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-blue-600 transition-colors group"
+            >
+              <span className="text-base group-hover:scale-110 transition-transform">🎬</span>
+              <span>View Platform Demo</span>
+              <svg className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+            </a>
+          </div>
         </CardContent>
       </Card>
       </div>
@@ -165,3 +176,4 @@ export default function Login() {
     </div>
   );
 }
+

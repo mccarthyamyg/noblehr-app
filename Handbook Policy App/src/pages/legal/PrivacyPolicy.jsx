@@ -181,3 +181,4 @@ export default function PrivacyPolicy() {
     </LegalPageShell>
   );
 }
+

@@ -86,13 +86,13 @@ export default function Setup() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-200">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-noble to-noble-dark flex items-center justify-center mx-auto mb-5 shadow-lg shadow-noble/20">
             <Building2 className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Noble HR</h1>
           <p className="text-slate-500 mt-2 text-sm">Set up your organization to get started</p>
           <p className="mt-3 text-sm">
-            <button type="button" onClick={() => { logout(); window.location.href = '/Login'; }} className="text-indigo-600 hover:underline">
+            <button type="button" onClick={() => { logout(); window.location.href = '/Login'; }} className="text-noble hover:underline">
               Using a different account? Sign out
             </button>
           </p>
@@ -101,7 +101,7 @@ export default function Setup() {
         {/* Progress */}
         <div className="flex items-center justify-center gap-2 mb-8">
           {[1, 2, 3, 4].map(s => (
-            <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${s === step ? 'w-8 bg-indigo-600' : s < step ? 'w-8 bg-indigo-300' : 'w-8 bg-slate-200'}`} />
+            <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${s === step ? 'w-8 bg-indigo-600' : s < step ? 'w-8 bg-noble-light' : 'w-8 bg-slate-200'}`} />
           ))}
         </div>
 
@@ -197,7 +197,7 @@ export default function Setup() {
                 <Button
                   onClick={() => setStep(2)}
                   disabled={!orgData.name || (!googleCredential && (!orgData.admin_email || !orgData.admin_password))}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700"
+                  className="w-full bg-noble hover:bg-noble-dark"
                 >
                   Continue <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -240,7 +240,7 @@ export default function Setup() {
                 </Button>
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Back</Button>
-                  <Button onClick={() => setStep(3)} className="flex-1 bg-indigo-600 hover:bg-indigo-700">
+                  <Button onClick={() => setStep(3)} className="flex-1 bg-noble hover:bg-noble-dark">
                     Continue <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -290,7 +290,7 @@ export default function Setup() {
 
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setStep(2)} className="flex-1">Back</Button>
-                  <Button onClick={() => setStep(4)} className="flex-1 bg-indigo-600 hover:bg-indigo-700">
+                  <Button onClick={() => setStep(4)} className="flex-1 bg-noble hover:bg-noble-dark">
                     Continue <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -301,7 +301,7 @@ export default function Setup() {
               <div className="space-y-5">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-indigo-600" />
+                    <Bell className="w-5 h-5 text-noble" />
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900">Reminder Preferences</h2>
@@ -359,7 +359,7 @@ export default function Setup() {
                     id="accept_tos"
                     checked={acceptTos}
                     onChange={e => setAcceptTos(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600"
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-noble"
                   />
                   <label htmlFor="accept_tos" className="text-sm text-slate-700">
                     I agree to the Terms of Service (data ownership, platform access for support only, data portability, and confidentiality).
@@ -368,7 +368,7 @@ export default function Setup() {
 
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setStep(3)} className="flex-1">Back</Button>
-                  <Button onClick={handleCreateOrg} disabled={saving || !acceptTos || (notifications.sms_reminders && !notifications.phone_number)} className="flex-1 bg-indigo-600 hover:bg-indigo-700">
+                  <Button onClick={handleCreateOrg} disabled={saving || !acceptTos || (notifications.sms_reminders && !notifications.phone_number)} className="flex-1 bg-noble hover:bg-noble-dark">
                     {saving ? 'Creating...' : 'Create Organization'}
                     <Check className="w-4 h-4 ml-2" />
                   </Button>

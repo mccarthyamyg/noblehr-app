@@ -61,7 +61,7 @@ export default function ActivityLog() {
         skip,
         limit: PAGE_SIZE,
         search,
-        event_type_prefix: typeFilter
+        event_type_prefix: typeFilter === 'all' ? '' : typeFilter
       });
       setEvents(res.data?.events || []);
     } catch (e) {

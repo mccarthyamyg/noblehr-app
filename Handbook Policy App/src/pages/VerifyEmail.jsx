@@ -32,7 +32,7 @@ export default function VerifyEmail() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 flex flex-col items-center gap-4">
-            <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+            <Loader2 className="w-10 h-10 text-noble animate-spin" />
             <p className="text-slate-500">Verifying your email...</p>
           </CardContent>
         </Card>
@@ -83,3 +83,4 @@ export default function VerifyEmail() {
     </div>
   );
 }
+

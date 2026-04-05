@@ -5,6 +5,6 @@ export default defineConfig({
   schema: './db/schema.js',
   out: './db/migrations',
   dbCredentials: {
-    url: process.env.DATABASE_URL || 'postgresql://localhost:5432/policyvault',
+    url: process.env.DATABASE_URL || 'postgresql://localhost:5432/noblehr',
   },
 });

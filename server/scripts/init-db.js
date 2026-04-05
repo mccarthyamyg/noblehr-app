@@ -1,5 +1,5 @@
 /**
- * PolicyVault Database Schema
+ * Noble HR Database Schema
  * Run: node scripts/init-db.js
  */
 import Database from 'better-sqlite3';
@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dbPath = join(__dirname, '..', 'data', 'policyvault.db');
+const dbPath = join(__dirname, '..', 'data', 'noblehr.db');
 
 import { mkdirSync } from 'fs';
 mkdirSync(join(__dirname, '..', 'data'), { recursive: true });

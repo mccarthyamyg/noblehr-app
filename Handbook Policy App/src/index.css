@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,8 +6,18 @@
 @layer base {
   :root {
     /* Noble HR app primary: deep blue #1E40AF (Noble_HR_Rebrand_v2) */
+    --noble-blue-light: 226 71% 60%;
+    --noble-blue-base: 226 71% 40%;
+    --noble-blue-dark: 226 71% 25%;
+    
     --noble-forest: 152 43% 18%;
     --noble-purple: 263 67% 35%;
+
+    /* App accent — the signature color for this Noble app */
+    /* HR = cyan (#06b6d4), Tasks = emerald, Hub = amber */
+    --app-accent: 187 72% 43%;
+    --app-accent-light: 187 72% 92%;
+    --app-accent-dark: 187 72% 33%;
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -43,6 +54,10 @@
   }
 
   .dark {
+    --noble-blue-light: 226 71% 70%;
+    --noble-blue-base: 226 71% 55%;
+    --noble-blue-dark: 226 71% 40%;
+    
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { api } from '@/api/client';
-import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 
 export default function ApprovalWorkflow({ policy, onStatusChange, currentUser }) {
@@ -22,12 +21,12 @@ export default function ApprovalWorkflow({ policy, onStatusChange, currentUser }
   }, [policy?.id]);
 
   async function loadApprovals() {
-    const approvalRecords = await base44.entities.SystemEvent.filter({
+    const res = await api.invoke('getSystemEvents', {
       organization_id: policy.organization_id,
       entity_id: policy.id,
       event_type: 'policy.approval'
     });
-    setApprovals(approvalRecords);
+    setApprovals(res?.data || []);
   }
 
   async function handleApprove() {

@@ -148,7 +148,7 @@ export default function OrgSettings() {
         title="Organization Settings"
         description="Manage your organization's configuration"
         actions={
-          <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={saveSettings} disabled={saving}>
+          <Button className="bg-noble hover:bg-noble-dark" onClick={saveSettings} disabled={saving}>
             <Save className="w-4 h-4 mr-2" /> {saving ? 'Saving...' : 'Save Changes'}
           </Button>
         }
@@ -412,7 +412,7 @@ function PolicyOverridesTab({ org }) {
                 <div className="p-4">
                   <button
                     onClick={() => setExpandedTarget(isExpanded ? null : `${type}-${item.key}`)}
-                    className="w-full text-left flex items-center justify-between hover:text-indigo-600 transition-colors"
+                    className="w-full text-left flex items-center justify-between hover:text-noble transition-colors"
                   >
                     <div>
                       <p className="font-medium text-sm text-slate-900">{item.label}</p>

@@ -93,7 +93,7 @@ export default function InviteAccept() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+          <Loader2 className="w-10 h-10 text-noble animate-spin" />
           <p className="text-slate-500">Validating invite...</p>
         </div>
       </div>
@@ -144,7 +144,7 @@ export default function InviteAccept() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-noble to-noble-dark flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-7 h-7 text-white" />
           </div>
           <CardTitle className="text-2xl">Join {invite.org_name}</CardTitle>
@@ -208,7 +208,7 @@ export default function InviteAccept() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              className="w-full bg-noble hover:bg-noble-dark"
               disabled={accepting || !password}
             >
               {accepting ? 'Joining...' : 'Join with Email'}
@@ -219,3 +219,4 @@ export default function InviteAccept() {
     </div>
   );
 }
+

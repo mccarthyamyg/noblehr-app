@@ -211,7 +211,7 @@ export default function SuperAdmin() {
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         {loading ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+            <Loader2 className="w-10 h-10 text-noble animate-spin" />
           </div>
         ) : loadError ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
@@ -378,7 +378,7 @@ export default function SuperAdmin() {
                               size="sm"
                               onClick={() => launchOrg(org.id)}
                               disabled={launchingOrgId === org.id}
-                              className="gap-1 bg-indigo-600 hover:bg-indigo-700"
+                              className="gap-1 bg-noble hover:bg-noble-dark"
                             >
                               {launchingOrgId === org.id ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -561,3 +561,4 @@ export default function SuperAdmin() {
     </div>
   );
 }
+

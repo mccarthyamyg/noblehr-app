@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 
-const RESET_TOKEN_KEY = 'policyvault_reset_token';
+const RESET_TOKEN_KEY = 'noblehr_reset_token';
 
 export default function ResetPassword() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -118,3 +118,4 @@ export default function ResetPassword() {
     </div>
   );
 }
+

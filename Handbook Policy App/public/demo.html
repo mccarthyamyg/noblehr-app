@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Noble HR — Investor Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-card: #111827;
+      --bg-card-hover: #1a2332;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.25);
+      --accent-light: #60a5fa;
+      --accent-cyan: #22d3ee;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: rgba(255,255,255,0.08);
+      --border-accent: rgba(59, 130, 246, 0.3);
+      --gradient-accent: linear-gradient(135deg, #3b82f6, #22d3ee);
+      --radius: 16px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -30%;
+      left: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -30%;
+      right: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(34,211,238,0.04) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ===== HEADER ===== */
+    .hero {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 60px 24px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 30px var(--accent-glow));
+    }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: var(--gradient-accent);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .hero .subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .hero .badge {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 8px 20px;
+      background: rgba(59,130,246,0.12);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      color: var(--accent-light);
+      font-weight: 500;
+    }
+
+    /* ===== NAV ===== */
+    .segment-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 24px;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .segment-nav button {
+      position: relative;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 10px 22px;
+      border-radius: 100px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .segment-nav button:hover {
+      color: var(--text-primary);
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.04);
+    }
+    .segment-nav button.active {
+      color: #fff;
+      background: var(--gradient-accent);
+      border-color: transparent;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .segment-nav .nav-number {
+      display: inline-flex;
+      width: 20px;
+      height: 20px;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      font-size: 0.72rem;
+      margin-right: 8px;
+      font-weight: 700;
+    }
+    .segment-nav button.active .nav-number {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* ===== SEGMENTS ===== */
+    .segment {
+      display: none;
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+      animation: fadeIn 0.5s ease;
+    }
+    .segment.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .segment-header {
+      margin-bottom: 40px;
+    }
+    .segment-header .seg-label {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--accent-light);
+      margin-bottom: 12px;
+    }
+    .segment-header h2 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .segment-header .duration {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .segment-header .duration span {
+      color: var(--accent-light);
+    }
+
+    /* ===== VIDEO CARD ===== */
+    .video-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 40px;
+      transition: border-color 0.3s;
+    }
+    .video-card:hover {
+      border-color: var(--border-accent);
+    }
+    .video-card .video-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .video-card .video-label .dot {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .video-card img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ===== NARRATION ===== */
+    .narration-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+    .narration-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .narration-header:hover {
+      background: var(--bg-card-hover);
+    }
+    .narration-header h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .narration-header h3 .icon {
+      font-size: 1.2rem;
+    }
+    .narration-header .toggle-arrow {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      transition: transform 0.3s;
+    }
+    .narration-header.expanded .toggle-arrow {
+      transform: rotate(180deg);
+    }
+    .narration-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease;
+    }
+    .narration-body.expanded {
+      max-height: 2000px;
+    }
+    .narration-body blockquote {
+      margin: 0;
+      padding: 24px 28px 28px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.85;
+      border-left: 3px solid var(--accent);
+      margin: 16px 24px 24px;
+      border-radius: 0 8px 8px 0;
+      background: rgba(59,130,246,0.04);
+      padding: 20px 24px;
+    }
+    .narration-body blockquote strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* ===== CREDENTIALS TABLE ===== */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 20px;
+    }
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .info-card h3 {
+      padding: 16px 24px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    .info-card table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .info-card table th {
+      text-align: left;
+      padding: 12px 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .info-card table td {
+      padding: 12px 20px;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    .info-card table tr:last-child td { border-bottom: none; }
+    .info-card table td:first-child { color: var(--text-primary); font-weight: 500; }
+    .info-card table code {
+      background: rgba(59,130,246,0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: var(--accent-light);
+      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    /* ===== LIVE APP BUTTON ===== */
+    .live-btn-container {
+      text-align: center;
+      padding: 40px 24px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .live-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 36px;
+      background: var(--gradient-accent);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s;
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+    .live-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 50px rgba(59,130,246,0.4);
+    }
+    .live-btn .arrow { font-size: 1.2rem; }
+
+    /* ===== FOOTER ===== */
+    .demo-footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 60px 24px 40px;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    /* ===== SEGMENT 4 NARRATION-ONLY ===== */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .tech-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .tech-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+    }
+    .tech-card .tech-num {
+      display: inline-flex;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      background: var(--gradient-accent);
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .tech-card h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .tech-card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2rem; }
+      .segment-header h2 { font-size: 1.6rem; }
+      .segment-nav { flex-wrap: wrap; }
+      .segment-nav button { font-size: 0.78rem; padding: 8px 16px; }
+      .info-grid { grid-template-columns: 1fr; }
+      .tech-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero">
+    <img src="demo/noble_hr_logo.png" alt="Noble HR" class="hero-logo">
+    <h1>Noble HR</h1>
+    <p class="subtitle">Investor Demo Presentation</p>
+    <div class="badge">🎬 4 Segments · ~5 Minutes Total · Slow-Paced Walkthroughs</div>
+  </header>
+
+  <!-- ===== OPEN LIVE APP ===== -->
+  <div class="live-btn-container">
+    <a href="/" class="live-btn" target="_blank">
+      <span class="arrow">🚀</span>
+      Open Live App in New Tab
+    </a>
+  </div>
+
+  <!-- ===== SEGMENT NAV ===== -->
+  <nav class="segment-nav" id="segmentNav">
+    <button class="active" onclick="showSegment(0)">
+      <span class="nav-number">1</span>Login & Dashboard
+    </button>
+    <button onclick="showSegment(1)">
+      <span class="nav-number">2</span>Admin Features
+    </button>
+    <button onclick="showSegment(2)">
+      <span class="nav-number">3</span>Employee Experience
+    </button>
+    <button onclick="showSegment(3)">
+      <span class="nav-number">4</span>Tech & Security
+    </button>
+  </nav>
+
+  <!-- ===== SEGMENT 1: LOGIN & DASHBOARD ===== -->
+  <section class="segment active" id="seg0">
+    <div class="segment-header">
+      <div class="seg-label">Segment 1</div>
+      <h2>Login & Dashboard</h2>
+      <p class="duration">⏱ <span>~1 minute</span> · Video + Narration</p>
+    </div>
+
+    <div class="video-card">
+      <div class="video-label"><span class="dot"></span> Recording — Slow-Paced</div>
+      <img src="demo/segment1_login.webp" alt="Segment 1: Login flow and dashboard exploration">
+    </div>
+
+    <div class="narration-card">
+      <div class="narration-header expanded" onclick="toggleNarration(this)">
+        <h3><span class="icon">🔊</span> Narration Script</h3>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="narration-body expanded">
+        <blockquote>
+          Welcome to <strong>Noble HR</strong> — a modern, enterprise-grade Human Resources governance platform designed from the ground up for small-to-midsize businesses.
+          <br><br>
+          What you're looking at is the secure login page. The faceted N logo is the Noble platform brand — the blue-to-cyan accent is the signature color for the HR module. This same design system scales across our product suite — green for Noble Tasks, gold for Noble Hub — all driven by a single CSS variable.
+          <br><br>
+          <strong>Authentication</strong> uses industry-standard bcrypt password hashing, HTTP-only secure cookies, CSRF token protection on every request, and Google OAuth for enterprise SSO.
+          <br><br>
+          After signing in as an organization admin, we land on the <strong>Dashboard</strong> — the command center. At the top: real-time KPIs — 8 active policies, 15 employees, 4 open incidents, and pending re-acknowledgments. Each card is clickable.
+          <br><br>
+          Below, <strong>Policy Compliance</strong> shows the re-acknowledgment analytics and compliance rate. At any moment, an HR director knows exactly where the organization stands.
+          <br><br>
+          The <strong>Recent Activity</strong> feed is a chronological audit trail — every hire, termination, write-up, commendation, and policy publish is logged with who did it and when. This is your organizational memory — append-only and tamper-proof.
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SEGMENT 2: ADMIN FEATURES ===== -->
+  <section class="segment" id="seg1">
+    <div class="segment-header">
+      <div class="seg-label">Segment 2</div>
+      <h2>Admin Feature Walkthrough</h2>
+      <p class="duration">⏱ <span>~2 minutes</span> · Video + Narration</p>
+    </div>
+
+    <div class="video-card">
+      <div class="video-label"><span class="dot"></span> Recording — Slow-Paced</div>
+      <img src="demo/segment2_features.webp" alt="Segment 2: Admin walkthrough of all modules">
+    </div>
+
+    <div class="narration-card">
+      <div class="narration-header expanded" onclick="toggleNarration(this)">
+        <h3><span class="icon">🔊</span> Narration Script</h3>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="narration-body expanded">
+        <blockquote>
+          Let me walk through the core modules.
+          <br><br>
+          <strong>Handbook.</strong> This is the Employee Handbook — all policies compiled into a single, organized document. Categories include Safety, HR, Operations, Clinical, and IT Security. Each section is expandable. This is what employees see — professionally formatted, always up-to-date.
+          <br><br>
+          <strong>Policies.</strong> The backbone of compliance. 8 active policies — HIPAA, Workplace Safety, Anti-Harassment, Attendance, Infection Control, and more. Each with rich HTML content, version control, and acknowledgment tracking.
+          <br><br>
+          Admins can create policies from scratch using the rich-text editor, or use our <strong>AI Smart Generator</strong>. The AI produces legally-informed drafts based on industry, state, and company size — like having an employment attorney on call.
+          <br><br>
+          When a policy is published, every employee is automatically notified. The system tracks who acknowledged, who hasn't, and when re-acknowledgment is needed.
+          <br><br>
+          <strong>Employees.</strong> Full roster — 15 employees across 3 locations and 6 departments. Permission system is four-tier: Org Admin, Admin, Supervisor, and Employee. Each level sees only what they're authorized to see — enforced at both UI and API level.
+          <br><br>
+          <strong>HR Records.</strong> Disciplinary actions, commendations, and PIPs. Write-ups from tardiness to no-call/no-shows with severity levels. Commendations for outstanding performance. Each record creates an immutable audit trail.
+          <br><br>
+          <strong>Incidents.</strong> Full incident reporting — needlestick injuries, chemical spills, patient falls, workplace violence. Each with type classification, severity, witnesses, and a status workflow: submitted, under review, resolved. Every record feeds into the Activity Log.
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SEGMENT 3: EMPLOYEE EXPERIENCE ===== -->
+  <section class="segment" id="seg2">
+    <div class="segment-header">
+      <div class="seg-label">Segment 3</div>
+      <h2>The Employee Experience</h2>
+      <p class="duration">⏱ <span>~1 minute</span> · Video + Narration</p>
+    </div>
+
+    <div class="video-card">
+      <div class="video-label"><span class="dot"></span> Recording — Slow-Paced</div>
+      <img src="demo/segment3_employee.webp" alt="Segment 3: Employee login and policy acknowledgment flow">
+    </div>
+
+    <div class="narration-card">
+      <div class="narration-header expanded" onclick="toggleNarration(this)">
+        <h3><span class="icon">🔊</span> Narration Script</h3>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="narration-body expanded">
+        <blockquote>
+          Now let's switch to an employee's perspective. When <strong>Nemo</strong> — a Paramedic — logs in, he sees a completely different view.
+          <br><br>
+          His dashboard shows only his pending policy acknowledgments — one policy needing review. No admin menus, no HR records, no employee roster. <strong>Role-based access control</strong> at every layer.
+          <br><br>
+          He clicks the pending policy — Workplace Safety and Hazard Communication. The full policy text is displayed with Biohazard Handling, Chemical Safety, Fire Safety, and Reporting sections. After reading, he digitally acknowledges it.
+          <br><br>
+          The acknowledgment captures a timestamp, a <strong>SHA-256 content hash</strong> of the exact policy text, IP address, and user agent — creating a tamper-proof, legally binding record. We can mathematically prove what version was read and signed.
+          <br><br>
+          He can also browse the Handbook, submit incident reports, and view his own HR documents — but he cannot access other employees, admin settings, or org-level data.
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SEGMENT 4: TECHNICAL ===== -->
+  <section class="segment" id="seg3">
+    <div class="segment-header">
+      <div class="seg-label">Segment 4</div>
+      <h2>Technical Architecture & Security</h2>
+      <p class="duration">⏱ <span>~90 seconds</span> · Narration Only — read over any screenshot above</p>
+    </div>
+
+    <div class="narration-card">
+      <div class="narration-header expanded" onclick="toggleNarration(this)">
+        <h3><span class="icon">🔊</span> Narration Script</h3>
+        <span class="toggle-arrow">▼</span>
+      </div>
+      <div class="narration-body expanded">
+        <blockquote>
+          Now the technical foundation — because this is where Noble HR differentiates itself.
+          <br><br>
+          <strong>Architecture.</strong> Modern, decoupled. React frontend with Vite for sub-second hot reloads. Node.js plus Express backend providing a RESTful API. SQLite in development with a PostgreSQL adapter already wired for production horizontal scaling.
+        </blockquote>
+      </div>
+    </div>
+
+    <h3 style="color: var(--text-secondary); font-size: 0.88rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px;">Five Layers of Security</h3>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-num">1</div>
+        <h4>Authentication</h4>
+        <p>Bcrypt hashing with 10 salt rounds — the same standard as major banks. HTTP-only cookies JavaScript can't touch. CSRF token validation on every mutating request.</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-num">2</div>
+        <h4>Authorization</h4>
+        <p>Four-tier RBAC — Org Admin, Admin, Supervisor, Employee. Every API endpoint validates permissions at the middleware layer before the database is touched.</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-num">3</div>
+        <h4>Data Integrity</h4>
+        <p>SHA-256 hash of the exact policy HTML stored with acknowledgments. We can mathematically prove — in court if needed — exactly what version was signed.</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-num">4</div>
+        <h4>Audit Trail</h4>
+        <p>Every significant action generates an immutable system event with actor attribution, timestamp, and entity reference. Append-only. No admin can edit or delete entries.</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-num">5</div>
+        <h4>Input Validation</h4>
+        <p>Parameterized queries prevent SQL injection. React's built-in escaping handles XSS. Content Security Policy headers add another layer.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px;">
+      <div class="info-grid">
+        <div class="info-card">
+          <h3>🔑 Demo Credentials</h3>
+          <table>
+            <tr>
+              <th>Role</th>
+              <th>Email</th>
+              <th>Password</th>
+            </tr>
+            <tr>
+              <td>Org Admin</td>
+              <td><code>drmarlin@bbmc.local</code></td>
+              <td><code>WalkthroughQA2026!</code></td>
+            </tr>
+            <tr>
+              <td>Employee</td>
+              <td><code>nemo@bbmc.local</code></td>
+              <td><code>WalkthroughQA2026!</code></td>
+            </tr>
+            <tr>
+              <td>Metro General</td>
+              <td><code>director@mghr.local</code></td>
+              <td><code>StressTest2026!</code></td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="info-card">
+          <h3>📊 Platform Stats (Live)</h3>
+          <table>
+            <tr>
+              <th>Metric</th>
+              <th>BBMC</th>
+              <th>Metro General</th>
+            </tr>
+            <tr>
+              <td>Employees</td>
+              <td>15</td>
+              <td>35</td>
+            </tr>
+            <tr>
+              <td>Policies</td>
+              <td>8</td>
+              <td>15</td>
+            </tr>
+            <tr>
+              <td>Acknowledgments</td>
+              <td>~100</td>
+              <td>~400</td>
+            </tr>
+            <tr>
+              <td>HR Records</td>
+              <td>7</td>
+              <td>15</td>
+            </tr>
+            <tr>
+              <td>Incidents</td>
+              <td>5</td>
+              <td>12</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="demo-footer">
+    Noble HR — Confidential Investor Demo · © 2026
+  </footer>
+
+  <script>
+    function showSegment(index) {
+      document.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.segment-nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById('seg' + index).classList.add('active');
+      document.querySelectorAll('.segment-nav button')[index].classList.add('active');
+      window.scrollTo({ top: document.querySelector('.segment-nav').offsetTop + 60, behavior: 'smooth' });
+    }
+
+    function toggleNarration(header) {
+      header.classList.toggle('expanded');
+      const body = header.nextElementSibling;
+      body.classList.toggle('expanded');
+    }
+  </script>
+</body>
+</html>

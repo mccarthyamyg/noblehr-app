@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dbPath = join(__dirname, '..', 'data', 'policyvault.db');
+const dbPath = join(__dirname, '..', 'data', 'noblehr.db');
 
 const SUPER_ADMIN_EMAIL = 'mccarthy.amyg@gmail.com';
 const SALT_ROUNDS = 10;

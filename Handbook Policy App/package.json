@@ -1,5 +1,5 @@
 {
-  "name": "policyvault",
+  "name": "noblehr",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -13,8 +13,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@base44/sdk": "^0.8.18",
-    "@base44/vite-plugin": "^0.2.22",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
