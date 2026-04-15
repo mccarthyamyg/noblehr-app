@@ -25,7 +25,7 @@ const id = uuidv4();
 
 async function seedPostgres() {
   const pg = await import('pg');
-  const { Pool } = pg.default;
+  const { Pool } = pg.default || pg;
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production'
@@ -34,19 +34,6 @@ async function seedPostgres() {
   });
 
   try {
-    // Ensure table exists
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS super_admins (
-        id TEXT PRIMARY KEY,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        full_name TEXT,
-        first_name TEXT,
-        last_name TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-
     const { rows } = await pool.query('SELECT id FROM super_admins WHERE email = $1', [SUPER_ADMIN_EMAIL]);
     if (rows.length > 0) {
       await pool.query('UPDATE super_admins SET password_hash = $1, full_name = $2 WHERE email = $3',
@@ -62,8 +49,8 @@ async function seedPostgres() {
   }
 }
 
-function seedSqlite() {
-  const { default: Database } = await import('better-sqlite3');
+async function seedSqlite() {
+  const Database = (await import('better-sqlite3')).default;
   const dbPath = join(__dirname, '..', 'data', 'noblehr.db');
   const db = new Database(dbPath);
 
