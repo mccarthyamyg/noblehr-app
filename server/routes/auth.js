@@ -33,7 +33,15 @@ function isValidPassword(s) {
   return typeof s === 'string' && s.length >= 8 && s.length <= 128;
 }
 
-function validatePasswordStrength(password) {
+// Common password blocklist (L1 security fix)
+const COMMON_PASSWORDS = new Set([
+  'password', 'password1', 'password123', '12345678', '123456789', '1234567890',
+  'qwerty123', 'letmein', 'welcome1', 'admin123', 'iloveyou', 'sunshine',
+  'princess', 'football', 'charlie', 'access14', 'master12', 'dragon12',
+  'monkey123', 'shadow12', 'michael1', 'trustno1', 'baseball1', 'iloveyou1',
+]);
+
+function validatePasswordStrength(password, email) {
   if (typeof password !== 'string') return 'Password is required';
   if (password.length < 8) return 'Password must be at least 8 characters';
   if (password.length > 128) return 'Password must be less than 128 characters';
@@ -41,8 +49,17 @@ function validatePasswordStrength(password) {
   if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter';
   if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
   if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return 'Password must contain at least one special character';
+  if (COMMON_PASSWORDS.has(password.toLowerCase())) return 'This password is too common. Please choose a stronger password.';
+  // Check if password contains the email username
+  if (email) {
+    const emailUser = email.split('@')[0].toLowerCase();
+    if (emailUser.length >= 3 && password.toLowerCase().includes(emailUser)) {
+      return 'Password cannot contain your email address';
+    }
+  }
   return null;
 }
+
 
 // Helper: send approval email to super admin (with rate limit)
 async function sendApprovalEmailIfAllowed(orgId, orgName, adminEmail, adminName) {
@@ -92,7 +109,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'You must accept the Terms of Service to sign up' });
     }
     if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
-    const pwErr = validatePasswordStrength(password);
+    const pwErr = validatePasswordStrength(password, email);
     if (pwErr) return res.status(400).json({ error: pwErr });
     if (resolvedFullName.length > 200) return res.status(400).json({ error: 'Name too long' });
     if (org_name.length > 200) return res.status(400).json({ error: 'Organization name too long' });
@@ -496,12 +513,12 @@ router.post('/reset-password', async (req, res) => {
   try {
     const { token, new_password } = req.body;
     if (!token || !new_password) return res.status(400).json({ error: 'token and new_password required' });
-    const pwErr = validatePasswordStrength(new_password);
-    if (pwErr) return res.status(400).json({ error: pwErr });
     const row = await db.prepare('SELECT * FROM password_reset_tokens WHERE token = ? AND used_at IS NULL').get(token);
     if (!row) return res.status(404).json({ error: 'Invalid or expired reset link' });
     const now = new Date().toISOString();
     if (row.expires_at < now) return res.status(410).json({ error: 'Reset link has expired' });
+    const pwErr = validatePasswordStrength(new_password, row.email);
+    if (pwErr) return res.status(400).json({ error: pwErr });
     const updated = await db.prepare('UPDATE password_reset_tokens SET used_at = ? WHERE id = ? AND used_at IS NULL').run(now, row.id);
     if (updated.changes === 0) return res.status(404).json({ error: 'Invalid or expired reset link' });
     const user = await db.prepare('SELECT * FROM users WHERE email = ?').get(row.email);
@@ -680,7 +697,7 @@ router.post('/invites/accept', async (req, res) => {
       const resolvedFirst = (first_name || '').trim();
       const resolvedLast = (last_name || '').trim();
       name = (full_name || [resolvedFirst, resolvedLast].filter(Boolean).join(' ') || invite.full_name || email).trim().slice(0, 200);
-      const pwErr = validatePasswordStrength(password);
+      const pwErr = validatePasswordStrength(password, email);
       if (pwErr) {
         return res.status(400).json({ error: pwErr });
       }

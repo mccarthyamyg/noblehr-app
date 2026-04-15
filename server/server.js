@@ -58,7 +58,24 @@ if (isProd) {
     next();
   });
 }
-app.use(helmet({ contentSecurityPolicy: false })); // CSP can break SPA; enable with care
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://accounts.google.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://*.googleusercontent.com"],
+      connectSrc: ["'self'", "https://accounts.google.com", "https://oauth2.googleapis.com"],
+      frameSrc: ["https://accounts.google.com"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Required for Google OAuth embeds
+  hsts: isProd ? { maxAge: 63072000, includeSubDomains: true, preload: true } : false,
+}));
 app.use(cors({
   origin: corsOrigin,
   credentials: true,

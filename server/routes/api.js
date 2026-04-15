@@ -1685,7 +1685,7 @@ router.post('/ai/assist-writeup', async (req, res) => {
       title: title.slice(0, 500),
       description: description.slice(0, 20000),
       employeeRole: typeof employee_role === 'string' ? employee_role : '',
-      policyTitles: Array.isArray(policy_titles) ? policy_titles : [],
+      policyTitles: Array.isArray(policy_titles) ? policy_titles.slice(0, 500) : [],
     });
     return res.json({ data: suggestions });
   } catch (e) {

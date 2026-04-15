@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, timingSafeEqual } from 'crypto';
 import { db } from './db-pg-adapter.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'noblehr-dev-secret-change-in-production');
@@ -17,7 +17,7 @@ if (process.env.NODE_ENV === 'production' && !JWT_SECRET) {
   console.error('FATAL: JWT_SECRET must be set in production');
   process.exit(1);
 }
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = 12;
 
 export function hashPassword(password) {
   return bcrypt.hashSync(password, SALT_ROUNDS);
@@ -29,12 +29,12 @@ export function verifyPassword(password, hash) {
 
 export function createToken(userId, email, opts = {}) {
   const { expiresIn = '7d', ...rest } = opts;
-  return jwt.sign({ userId, email, ...rest }, JWT_SECRET, { expiresIn });
+  return jwt.sign({ userId, email, ...rest }, JWT_SECRET, { algorithm: 'HS256', expiresIn });
 }
 
 export function verifyToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
   } catch {
     return null;
   }
@@ -219,12 +219,23 @@ export async function getEmployeeContext(userEmail) {
 export function csrfMiddleware(req, res, next) {
   const method = (req.method || 'GET').toUpperCase();
   if (['GET', 'HEAD', 'OPTIONS'].includes(method)) return next();
-  // Bearer-only clients (e.g. mobile, test scripts) don't use cookies; skip CSRF for them
-  const isBearerOnly = req.headers['x-client-type'] === 'mobile' || (req.headers.authorization?.startsWith('Bearer ') && !req.cookies?.[COOKIE_CSRF]);
-  if (isBearerOnly) return next();
+  // Bearer-only clients (mobile/Expo) skip CSRF only if they use Authorization header without cookies
+  const hasBearerToken = req.headers.authorization?.startsWith('Bearer ');
+  const hasCsrfCookie = !!req.cookies?.[COOKIE_CSRF];
+  if (hasBearerToken && !hasCsrfCookie) return next();
   const cookieToken = req.cookies?.[COOKIE_CSRF];
   const headerToken = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'];
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  if (!cookieToken || !headerToken) {
+    return res.status(403).json({ error: 'Invalid or missing CSRF token. Request a new token from GET /api/auth/csrf.' });
+  }
+  // Timing-safe comparison to prevent token-byte leak via timing attacks
+  try {
+    const a = Buffer.from(cookieToken);
+    const b = Buffer.from(headerToken);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      return res.status(403).json({ error: 'Invalid or missing CSRF token. Request a new token from GET /api/auth/csrf.' });
+    }
+  } catch {
     return res.status(403).json({ error: 'Invalid or missing CSRF token. Request a new token from GET /api/auth/csrf.' });
   }
   next();
