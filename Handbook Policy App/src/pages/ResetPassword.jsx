@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
+import { PasswordStrength, evaluatePassword } from '../components/shared/PasswordStrength';
 
 const RESET_TOKEN_KEY = 'noblehr_reset_token';
 
@@ -35,8 +36,8 @@ export default function ResetPassword() {
       setError('Passwords do not match');
       return;
     }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+    if (!evaluatePassword(password).allPassed) {
+      setError('Password does not meet strength requirements');
       return;
     }
     setLoading(true);
@@ -93,13 +94,14 @@ export default function ResetPassword() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Set New Password</CardTitle>
-          <p className="text-slate-500 text-sm">Enter your new password (min 8 characters).</p>
+          <p className="text-slate-500 text-sm">Enter your new password.</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label>New Password</Label>
               <Input type="password" value={password} onChange={e => setPassword(e.target.value)} minLength={8} required />
+              <PasswordStrength password={password} />
             </div>
             <div>
               <Label>Confirm Password</Label>

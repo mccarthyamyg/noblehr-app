@@ -4,9 +4,16 @@ import { db as sqliteDb } from './db.js';
 const { Pool } = pg;
 const url = process.env.DATABASE_URL;
 
+const isProd = process.env.NODE_ENV === 'production';
 let pool = null;
 if (url) {
-  pool = new Pool({ connectionString: url });
+  pool = new Pool({
+    connectionString: url,
+    ssl: isProd ? { rejectUnauthorized: false } : false, // Railway internal networking
+    max: 20,            // connection pool size
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  });
 }
 
 export function parseJson(val) {

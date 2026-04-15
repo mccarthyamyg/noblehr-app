@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Mail, Loader2 } from 'lucide-react';
+import { PasswordStrength, evaluatePassword } from '../components/shared/PasswordStrength';
 
 export default function InviteAccept() {
   const [searchParams] = useSearchParams();
@@ -18,10 +19,12 @@ export default function InviteAccept() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState(null);
   const [requireVerification, setRequireVerification] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
     if (!token) {
@@ -38,7 +41,9 @@ export default function InviteAccept() {
       .validate(token)
       .then((data) => {
         setInvite(data);
-        setFullName(data.full_name || '');
+        const nameParts = (data.full_name || '').split(' ');
+        setFirstName(nameParts[0] || '');
+        setLastName(nameParts.slice(1).join(' ') || '');
       })
       .catch((err) => {
         setError(err.data?.error || err.message || 'Invalid or expired invite');
@@ -68,14 +73,18 @@ export default function InviteAccept() {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    if (!password || password.length < 8) {
-      setAcceptError('Password must be at least 8 characters');
+    if (!password || !evaluatePassword(password).allPassed) {
+      setAcceptError('Password does not meet strength requirements');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setAcceptError('Passwords do not match');
       return;
     }
     setAccepting(true);
     setAcceptError(null);
     try {
-      const data = await api.invites.accept({ token, password, full_name: fullName || invite?.email });
+      const data = await api.invites.accept({ token, password, first_name: firstName, last_name: lastName });
       if (data.requireVerification) {
         setRequireVerification(true);
       } else {
@@ -186,17 +195,28 @@ export default function InviteAccept() {
           )}
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Your Name</Label>
-              <Input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Jane Smith"
-                disabled={accepting}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>First Name</Label>
+                <Input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Jane"
+                  disabled={accepting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Last Name</Label>
+                <Input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Smith"
+                  disabled={accepting}
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label>Create Password (min 8 characters)</Label>
+              <Label>Create Password</Label>
               <Input
                 type="password"
                 value={password}
@@ -205,11 +225,26 @@ export default function InviteAccept() {
                 minLength={8}
                 disabled={accepting}
               />
+              <PasswordStrength password={password} />
+            </div>
+            <div className="space-y-2">
+              <Label>Confirm Password</Label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                minLength={8}
+                disabled={accepting}
+              />
+              {confirmPassword && confirmPassword !== password && (
+                <p className="text-xs text-red-500">Passwords do not match</p>
+              )}
             </div>
             <Button
               type="submit"
               className="w-full bg-noble hover:bg-noble-dark"
-              disabled={accepting || !password}
+              disabled={accepting || !password || !evaluatePassword(password).allPassed || password !== confirmPassword}
             >
               {accepting ? 'Joining...' : 'Join with Email'}
             </Button>

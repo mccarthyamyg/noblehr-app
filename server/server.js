@@ -15,8 +15,10 @@ import { spawnSync } from 'child_process';
 import { authRouter } from './routes/auth.js';
 import { apiRouter } from './routes/api.js';
 import { db } from './lib/db.js';
+import { db as pgDb } from './lib/db-pg-adapter.js';
 import { csrfMiddleware } from './lib/auth.js';
 import { runSqliteMigrations } from './lib/run-sqlite-migrations.js';
+import { runPgMigrations } from './db/run-pg-migrations.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3001;
@@ -65,10 +67,15 @@ app.use(express.json({ limit: '500kb' })); // Prevent large payload DoS
 app.use(cookieParser());
 
 // Health check (no auth, no rate limit)
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
   try {
-    db.prepare('SELECT 1').get();
-    res.json({ ok: true, db: 'connected' });
+    if (process.env.DATABASE_URL) {
+      await pgDb.prepare('SELECT 1').get();
+      res.json({ ok: true, db: 'postgres' });
+    } else {
+      db.prepare('SELECT 1').get();
+      res.json({ ok: true, db: 'sqlite' });
+    }
   } catch (e) {
     res.status(503).json({ ok: false, db: 'error', error: isProd ? 'Service unavailable' : e.message });
   }
@@ -121,11 +128,20 @@ if (existsSync(clientDist)) {
 mkdirSync(join(__dirname, 'data'), { recursive: true });
 mkdirSync(join(__dirname, 'data', 'uploads'), { recursive: true });
 
-function runStartupMigrations() {
-  try {
-    runSqliteMigrations(db);
-  } catch (err) {
-    console.error('[migrations] Failed:', err.message);
+async function runStartupMigrations() {
+  if (process.env.DATABASE_URL) {
+    try {
+      await runPgMigrations();
+      console.log('[startup] PostgreSQL migrations complete.');
+    } catch (err) {
+      console.error('[pg-migrate] Failed:', err.message);
+    }
+  } else {
+    try {
+      runSqliteMigrations(db);
+    } catch (err) {
+      console.error('[sqlite-migrate] Failed:', err.message);
+    }
   }
 }
 
@@ -146,9 +162,9 @@ function maybeAutoSeedSuperAdmin() {
   else console.log('[AUTO-BOOT] Super admin seed completed.');
 }
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Noble HR server running on http://0.0.0.0:${PORT}`);
-  console.log('Run "node scripts/init-db.js" first if database does not exist.');
-  runStartupMigrations();
+  console.log(`Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
+  await runStartupMigrations();
   maybeAutoSeedSuperAdmin();
 });

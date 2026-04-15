@@ -631,5 +631,34 @@ for (const r of federalBaseline) {
   `).run(randomUUID(), r.key, text, suggested, text, suggested, r.citation || '', r.url || '', now, now, r.category || '');
 }
 
+// Migration: first_name / last_name split (Noble platform cross-app parity)
+for (const table of ['users', 'employees', 'super_admins']) {
+  try {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+    const colNames = cols.map(c => c.name);
+    if (!colNames.includes('first_name')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN first_name TEXT`);
+      // Backfill: split full_name on first space
+      db.prepare(`UPDATE ${table} SET first_name = CASE WHEN INSTR(full_name, ' ') > 0 THEN SUBSTR(full_name, 1, INSTR(full_name, ' ') - 1) ELSE full_name END WHERE first_name IS NULL AND full_name IS NOT NULL`).run();
+    }
+    if (!colNames.includes('last_name')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN last_name TEXT`);
+      // Backfill: everything after the first space
+      db.prepare(`UPDATE ${table} SET last_name = CASE WHEN INSTR(full_name, ' ') > 0 THEN SUBSTR(full_name, INSTR(full_name, ' ') + 1) ELSE '' END WHERE last_name IS NULL AND full_name IS NOT NULL`).run();
+    }
+  } catch (_) { /* table may not exist yet */ }
+}
+
+// Migration: invites — first_name / last_name
+try {
+  const invCols = db.prepare("PRAGMA table_info(invites)").all();
+  const invColNames = invCols.map(c => c.name);
+  if (!invColNames.includes('first_name')) db.exec("ALTER TABLE invites ADD COLUMN first_name TEXT");
+  if (!invColNames.includes('last_name')) db.exec("ALTER TABLE invites ADD COLUMN last_name TEXT");
+  // Backfill from existing full_name
+  db.prepare("UPDATE invites SET first_name = CASE WHEN INSTR(full_name, ' ') > 0 THEN SUBSTR(full_name, 1, INSTR(full_name, ' ') - 1) ELSE full_name END WHERE first_name IS NULL AND full_name IS NOT NULL").run();
+  db.prepare("UPDATE invites SET last_name = CASE WHEN INSTR(full_name, ' ') > 0 THEN SUBSTR(full_name, INSTR(full_name, ' ') + 1) ELSE '' END WHERE last_name IS NULL AND full_name IS NOT NULL").run();
+} catch (_) { /* */ }
+
 console.log('Database initialized at', dbPath);
 db.close();

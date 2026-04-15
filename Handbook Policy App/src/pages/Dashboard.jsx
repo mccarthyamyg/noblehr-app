@@ -121,7 +121,7 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader
-        title={`Welcome back, ${employee?.full_name?.split(' ')[0] || 'there'}`}
+        title={`Welcome back, ${employee?.first_name || employee?.full_name?.split(' ')[0] || 'there'}`}
         description={isAdmin ? `${org?.name} — Organization Overview` : `${org?.name} — Your Policies & Compliance`}
       />
 

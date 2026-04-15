@@ -5,6 +5,7 @@ import { api } from '@/api/client';
 import { useOrg } from '../components/hooks/useOrganization';
 import { createPageUrl } from '../utils';
 import { Building2, Plus, ArrowRight, Check, Trash2, Bell } from 'lucide-react';
+import { PasswordStrength, evaluatePassword } from '../components/shared/PasswordStrength';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,7 @@ export default function Setup() {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [googleCredential, setGoogleCredential] = useState(null);
-  const [orgData, setOrgData] = useState({ name: '', industry: '', admin_email: '', admin_password: '', admin_name: '' });
+  const [orgData, setOrgData] = useState({ name: '', industry: '', admin_email: '', admin_password: '', admin_first_name: '', admin_last_name: '' });
   const [locations, setLocations] = useState([{ name: '', address: '' }]);
   const [roles, setRoles] = useState(['Manager', 'Supervisor', 'Team Lead']);
   const [departments, setDepartments] = useState(['Operations', 'Front of House', 'Back of House']);
@@ -25,11 +26,18 @@ export default function Setup() {
   const [newDept, setNewDept] = useState('');
   const [notifications, setNotifications] = useState({ email_reminders: false, sms_reminders: false, phone_number: '' });
   const [acceptTos, setAcceptTos] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
     const state = location.state || {};
     if (state.googleEmail || state.googleName) {
-      setOrgData(prev => ({ ...prev, admin_email: state.googleEmail || prev.admin_email, admin_name: state.googleName || prev.admin_name }));
+      const nameParts = (state.googleName || '').split(' ');
+      setOrgData(prev => ({
+        ...prev,
+        admin_email: state.googleEmail || prev.admin_email,
+        admin_first_name: nameParts[0] || prev.admin_first_name,
+        admin_last_name: nameParts.slice(1).join(' ') || prev.admin_last_name
+      }));
     }
   }, [location.state]);
 
@@ -60,7 +68,8 @@ export default function Setup() {
         const data = await api.auth.register({
           email: orgData.admin_email,
           password: orgData.admin_password,
-          full_name: orgData.admin_name,
+          first_name: orgData.admin_first_name,
+          last_name: orgData.admin_last_name,
           org_name: orgData.name,
           industry: orgData.industry,
           locations: locations.filter(l => l.name).map(l => ({ name: l.name, address: l.address })),
@@ -164,14 +173,25 @@ export default function Setup() {
                   </>
                 )}
 
-                <div className="space-y-2">
-                  <Label>Your Name</Label>
-                  <Input
-                    value={orgData.admin_name}
-                    onChange={e => setOrgData({ ...orgData, admin_name: e.target.value })}
-                    placeholder="Jane Smith"
-                    readOnly={!!googleCredential}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>First Name</Label>
+                    <Input
+                      value={orgData.admin_first_name}
+                      onChange={e => setOrgData({ ...orgData, admin_first_name: e.target.value })}
+                      placeholder="Jane"
+                      readOnly={!!googleCredential}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Last Name</Label>
+                    <Input
+                      value={orgData.admin_last_name}
+                      onChange={e => setOrgData({ ...orgData, admin_last_name: e.target.value })}
+                      placeholder="Smith"
+                      readOnly={!!googleCredential}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Your Email</Label>
@@ -184,6 +204,7 @@ export default function Setup() {
                   />
                 </div>
                 {!googleCredential && (
+                  <>
                   <div className="space-y-2">
                     <Label>Password</Label>
                     <Input
@@ -192,11 +213,25 @@ export default function Setup() {
                       onChange={e => setOrgData({ ...orgData, admin_password: e.target.value })}
                       placeholder="••••••••"
                     />
+                    <PasswordStrength password={orgData.admin_password} />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Confirm Password</Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                    {confirmPassword && confirmPassword !== orgData.admin_password && (
+                      <p className="text-xs text-red-500">Passwords do not match</p>
+                    )}
+                  </div>
+                  </>
                 )}
                 <Button
                   onClick={() => setStep(2)}
-                  disabled={!orgData.name || (!googleCredential && (!orgData.admin_email || !orgData.admin_password))}
+                  disabled={!orgData.name || (!googleCredential && (!orgData.admin_email || !orgData.admin_password || !orgData.admin_first_name || !evaluatePassword(orgData.admin_password).allPassed || confirmPassword !== orgData.admin_password))}
                   className="w-full bg-noble hover:bg-noble-dark"
                 >
                   Continue <ArrowRight className="w-4 h-4 ml-2" />

@@ -459,7 +459,7 @@ function PolicyOverridesTab({ org }) {
 
       {renderTargetSection('Roles', 'role', orgRoles, r => r, r => r)}
       {renderTargetSection('Locations', 'location', locations, l => l.id, l => l.name)}
-      {renderTargetSection('Employees', 'employee', employees, e => e.id, e => e.full_name)}
+      {renderTargetSection('Employees', 'employee', employees, e => e.id, e => e.first_name ? `${e.first_name} ${e.last_name || ''}`.trim() : e.full_name)}
     </div>
   );
 }

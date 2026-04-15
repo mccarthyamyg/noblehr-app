@@ -5,7 +5,7 @@ import { OrgProvider, useOrg } from './components/hooks/useOrganization';
 import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, FileText, Users, ShieldAlert, FolderLock,
-  Bell, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, Menu, X, BookOpen, Sparkles, User, ClipboardCheck, FileSearch, Plane, FileSignature, FileCheck
+  Bell, Settings, ChevronLeft, ChevronRight, ChevronDown, LogOut, Menu, X, BookOpen, Sparkles, User, ClipboardCheck, FileSearch, Plane, FileSignature, FileCheck, Plug
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { generateCoreCSS } from './components/designSystem';
@@ -110,6 +110,7 @@ function LayoutShell({ children, currentPageName }) {
     { name: 'Gap audit', icon: FileSearch, page: 'GapAudit', category: 'Audit & Compliance', show: hasCap('gap_audit') },
     { name: 'Activity Log', icon: Bell, page: 'ActivityLog', category: 'Audit & Compliance', show: hasCap('view_activity_log') },
     { name: 'Org Settings', icon: Settings, page: 'OrgSettings', category: 'Settings', show: hasCap('manage_org_settings') },
+    { name: 'Integrations', icon: Plug, page: 'IntegrationsSettings', category: 'Settings', show: false },
     { name: 'My Account', icon: User, page: 'Profile', category: 'Settings', show: true },
   ].filter(i => i.show);
 
@@ -203,7 +204,7 @@ function LayoutShell({ children, currentPageName }) {
       <div className="p-3 border-t border-slate-200/60">
         {!collapsed && (
           <div className="px-3 py-2 mb-2">
-            <p className="text-xs font-medium text-slate-700 truncate">{employee?.full_name}</p>
+            <p className="text-xs font-medium text-slate-700 truncate">{employee?.first_name ? `${employee.first_name} ${employee.last_name || ''}`.trim() : employee?.full_name}</p>
             <p className="text-xs text-slate-400 truncate">{employee?.user_email}</p>
           </div>
         )}

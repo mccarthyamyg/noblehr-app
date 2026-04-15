@@ -20,6 +20,8 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   fullName: text('full_name'),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
   authProvider: text('auth_provider').default('email'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
@@ -30,6 +32,8 @@ export const superAdmins = pgTable('super_admins', {
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   fullName: text('full_name'),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -77,6 +81,8 @@ export const employees = pgTable(
     organizationId: text('organization_id').notNull().references(() => organizations.id),
     userEmail: text('user_email').notNull(),
     fullName: text('full_name'),
+    firstName: text('first_name'),
+    lastName: text('last_name'),
     role: text('role'),
     department: text('department'),
     locationId: text('location_id').references(() => locations.id),
@@ -313,6 +319,8 @@ export const invites = pgTable('invites', {
   expiresAt: text('expires_at').notNull(),
   createdByEmail: text('created_by_email'),
   fullName: text('full_name'),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
   role: text('role'),
   locationId: text('location_id'),
   usedAt: text('used_at'),

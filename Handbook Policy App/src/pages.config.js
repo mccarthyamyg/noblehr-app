@@ -56,6 +56,7 @@ import EmployeeProfile from './pages/EmployeeProfile';
 import GapAudit from './pages/GapAudit';
 import Employees from './pages/Employees';
 import HRRecords from './pages/HRRecords';
+import IntegrationsSettings from './pages/IntegrationsSettings';
 import Handbook from './pages/Handbook';
 import Incidents from './pages/Incidents';
 import MyOnboarding from './pages/MyOnboarding';
@@ -81,6 +82,7 @@ export const PAGES = {
     "GapAudit": GapAudit,
     "Employees": Employees,
     "HRRecords": HRRecords,
+    "IntegrationsSettings": IntegrationsSettings,
     "Handbook": Handbook,
     "Incidents": Incidents,
     "MyOnboarding": MyOnboarding,

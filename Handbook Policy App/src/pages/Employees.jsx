@@ -28,12 +28,12 @@ export default function Employees() {
   const [editEmployee, setEditEmployee] = useState(null);
   const [inviteStatus, setInviteStatus] = useState(null); // 'sent' | 'skipped' | 'failed'
   const [showInvite, setShowInvite] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ email: '', full_name: '', role: '', location_id: '' });
+  const [inviteForm, setInviteForm] = useState({ email: '', first_name: '', last_name: '', role: '', location_id: '', department: '', permission_level: 'employee' });
   const [inviteLink, setInviteLink] = useState(null);
   const [inviteSaving, setInviteSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [form, setForm] = useState({
-    full_name: '', user_email: '', role: '', department: '',
+    first_name: '', last_name: '', user_email: '', role: '', department: '',
     location_id: '', permission_level: 'employee', hire_date: '', tags: [], capabilities: []
   });
   const [capabilitiesList, setCapabilitiesList] = useState([]);
@@ -63,7 +63,7 @@ export default function Employees() {
       try { caps = typeof emp.capabilities === 'string' ? JSON.parse(emp.capabilities) : emp.capabilities; } catch (_) {}
     }
     setForm({
-      full_name: emp.full_name, user_email: emp.user_email || '', role: emp.role || '',
+      first_name: emp.first_name || (emp.full_name || '').split(' ')[0] || '', last_name: emp.last_name || (emp.full_name || '').split(' ').slice(1).join(' ') || '', user_email: emp.user_email || '', role: emp.role || '',
       department: emp.department || '', location_id: emp.location_id || '',
       permission_level: emp.permission_level || 'employee', hire_date: emp.hire_date || '',
       tags: emp.tags || [], capabilities: Array.isArray(caps) ? caps : []
@@ -77,7 +77,7 @@ export default function Employees() {
   async function openNew() {
     setEditEmployee(null);
     setForm({
-      full_name: '', user_email: '', role: '', department: '',
+      first_name: '', last_name: '', user_email: '', role: '', department: '',
       location_id: '', permission_level: 'employee', hire_date: '', tags: [], capabilities: []
     });
     if (capabilitiesList.length === 0) {
@@ -90,7 +90,7 @@ export default function Employees() {
     setSaving(true);
     setInviteStatus(null);
     try {
-      const data = { ...form, organization_id: org.id, status: 'active', capabilities: form.permission_level === 'manager' ? (form.capabilities || []) : [] };
+      const data = { ...form, full_name: [form.first_name, form.last_name].filter(Boolean).join(' '), organization_id: org.id, status: 'active', capabilities: form.permission_level === 'manager' ? (form.capabilities || []) : [] };
       if (editEmployee) {
         await api.invoke('secureEmployeeWrite', {
           action: 'update',
@@ -113,7 +113,8 @@ export default function Employees() {
   }
 
   const filtered = employees.filter(e => {
-    if (search && !e.full_name?.toLowerCase().includes(search.toLowerCase()) && !e.user_email?.toLowerCase().includes(search.toLowerCase())) return false;
+    const displayName = e.first_name ? `${e.first_name} ${e.last_name || ''}`.trim() : (e.full_name || '');
+    if (search && !displayName.toLowerCase().includes(search.toLowerCase()) && !e.user_email?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
@@ -140,7 +141,7 @@ export default function Employees() {
         description={`${employees.length} employees in ${org?.name}`}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => { setShowInvite(true); setInviteLink(null); setInviteForm({ email: '', full_name: '', role: '', location_id: '' }); }}>
+            <Button variant="outline" onClick={() => { setShowInvite(true); setInviteLink(null); setInviteForm({ email: '', first_name: '', last_name: '', role: '', location_id: '', department: '', permission_level: 'employee' }); }}>
               <Send className="w-4 h-4 mr-2" /> Invite by Email
             </Button>
             <Button className="bg-noble hover:bg-noble-dark" onClick={openNew}>
@@ -165,11 +166,11 @@ export default function Employees() {
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-bold text-indigo-700">
-                    {emp.full_name?.charAt(0)?.toUpperCase()}
+                    {(emp.first_name || emp.full_name)?.charAt(0)?.toUpperCase()}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold text-slate-900 truncate">{emp.full_name}</h3>
+                  <h3 className="text-sm font-semibold text-slate-900 truncate">{emp.first_name ? `${emp.first_name} ${emp.last_name || ''}`.trim() : emp.full_name}</h3>
                   <div className="flex flex-wrap items-center gap-2 mt-1.5">
                     <StatusBadge status={emp.permission_level} />
                     <StatusBadge status={emp.status} />
@@ -195,13 +196,17 @@ export default function Employees() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} />
+                <Label>First Name *</Label>
+                <Input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={form.user_email} onChange={e => setForm({ ...form, user_email: e.target.value })} type="email" />
+                <Label>Last Name</Label>
+                <Input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={form.user_email} onChange={e => setForm({ ...form, user_email: e.target.value })} type="email" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -282,7 +287,7 @@ export default function Employees() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-            <Button className="bg-noble hover:bg-noble-dark" onClick={saveEmployee} disabled={saving || !form.full_name}>
+            <Button className="bg-noble hover:bg-noble-dark" onClick={saveEmployee} disabled={saving || !form.first_name}>
               {saving ? 'Saving...' : editEmployee ? 'Update' : 'Add Employee'}
             </Button>
           </DialogFooter>
@@ -301,9 +306,15 @@ export default function Employees() {
                 <Label>Email *</Label>
                 <Input value={inviteForm.email} onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} type="email" placeholder="employee@company.com" />
               </div>
-              <div className="space-y-2">
-                <Label>Full Name (optional)</Label>
-                <Input value={inviteForm.full_name} onChange={e => setInviteForm({ ...inviteForm, full_name: e.target.value })} placeholder="Jane Smith" />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>First Name *</Label>
+                  <Input value={inviteForm.first_name} onChange={e => setInviteForm({ ...inviteForm, first_name: e.target.value })} placeholder="Jane" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Last Name *</Label>
+                  <Input value={inviteForm.last_name} onChange={e => setInviteForm({ ...inviteForm, last_name: e.target.value })} placeholder="Smith" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -318,7 +329,20 @@ export default function Employees() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Location</Label>
+                  <Label>Department</Label>
+                  <Select value={inviteForm.department} onValueChange={v => setInviteForm({ ...inviteForm, department: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
+                    <SelectContent>
+                      {(org?.settings?.departments || []).map(d => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Location *</Label>
                   <Select value={inviteForm.location_id} onValueChange={v => setInviteForm({ ...inviteForm, location_id: v })}>
                     <SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger>
                     <SelectContent>
@@ -328,20 +352,31 @@ export default function Employees() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>Permission Level</Label>
+                  <Select value={inviteForm.permission_level} onValueChange={v => setInviteForm({ ...inviteForm, permission_level: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="employee">Employee</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="org_admin">Org Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowInvite(false)}>Cancel</Button>
                 <Button className="bg-noble hover:bg-noble-dark" onClick={async () => {
                   setInviteSaving(true);
                   try {
-                    const res = await api.invites.create({ ...inviteForm, organization_id: org.id });
+                    const res = await api.invites.create({ ...inviteForm, full_name: [inviteForm.first_name, inviteForm.last_name].filter(Boolean).join(' '), organization_id: org.id });
                     setInviteLink(res.data?.invite_link || '');
                   } catch (e) {
                     alert(e.data?.error || e.message || 'Failed to create invite');
                   } finally {
                     setInviteSaving(false);
                   }
-                }} disabled={inviteSaving || !inviteForm.email?.trim()}>
+                }} disabled={inviteSaving || !inviteForm.email?.trim() || !inviteForm.first_name?.trim() || !inviteForm.last_name?.trim()}>
                   {inviteSaving ? 'Creating...' : 'Create Invite'}
                 </Button>
               </DialogFooter>
@@ -361,7 +396,7 @@ export default function Employees() {
               </div>
               <p className="text-xs text-slate-500">Link expires in 7 days. You can also send this via email manually.</p>
               <DialogFooter>
-                <Button variant="outline" onClick={() => { setInviteLink(null); setInviteForm({ email: '', full_name: '', role: '', location_id: '' }); }}>Invite Another</Button>
+                <Button variant="outline" onClick={() => { setInviteLink(null); setInviteForm({ email: '', first_name: '', last_name: '', role: '', location_id: '', department: '', permission_level: 'employee' }); }}>Invite Another</Button>
                 <Button className="bg-noble hover:bg-noble-dark" onClick={() => setShowInvite(false)}>Done</Button>
               </DialogFooter>
             </div>

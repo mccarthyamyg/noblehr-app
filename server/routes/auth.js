@@ -33,6 +33,17 @@ function isValidPassword(s) {
   return typeof s === 'string' && s.length >= 8 && s.length <= 128;
 }
 
+function validatePasswordStrength(password) {
+  if (typeof password !== 'string') return 'Password is required';
+  if (password.length < 8) return 'Password must be at least 8 characters';
+  if (password.length > 128) return 'Password must be less than 128 characters';
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
+  if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter';
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return 'Password must contain at least one special character';
+  return null;
+}
+
 // Helper: send approval email to super admin (with rate limit)
 async function sendApprovalEmailIfAllowed(orgId, orgName, adminEmail, adminName) {
   const org = await db.prepare('SELECT * FROM organizations WHERE id = ?').get(orgId);
@@ -69,16 +80,21 @@ async function sendApprovalEmailIfAllowed(orgId, orgName, adminEmail, adminName)
 // POST /api/auth/register - First user creates org (Setup flow) - requires super admin approval
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, full_name, org_name, industry, locations, roles, departments, accept_tos } = req.body;
-    if (!email || !password || !full_name || !org_name) {
-      return res.status(400).json({ error: 'email, password, full_name, org_name required' });
+    const { email, password, full_name, first_name, last_name, org_name, industry, locations, roles, departments, accept_tos } = req.body;
+    // Compose full_name from first/last if provided separately
+    const resolvedFirstName = (first_name || '').trim();
+    const resolvedLastName = (last_name || '').trim();
+    const resolvedFullName = (full_name || [resolvedFirstName, resolvedLastName].filter(Boolean).join(' ')).trim();
+    if (!email || !password || !resolvedFullName || !org_name) {
+      return res.status(400).json({ error: 'email, password, name, org_name required' });
     }
     if (!accept_tos) {
       return res.status(400).json({ error: 'You must accept the Terms of Service to sign up' });
     }
     if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
-    if (!isValidPassword(password)) return res.status(400).json({ error: 'Password must be 8-128 characters' });
-    if (full_name.length > 200) return res.status(400).json({ error: 'Name too long' });
+    const pwErr = validatePasswordStrength(password);
+    if (pwErr) return res.status(400).json({ error: pwErr });
+    if (resolvedFullName.length > 200) return res.status(400).json({ error: 'Name too long' });
     if (org_name.length > 200) return res.status(400).json({ error: 'Organization name too long' });
     const existing = await db.prepare('SELECT id FROM users WHERE email = ?').get(email);
     if (existing) {
@@ -91,8 +107,8 @@ router.post('/register', async (req, res) => {
     const expiresAt = new Date(Date.now() + APPROVAL_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const now = new Date().toISOString();
     await db.transaction(async () => {
-      await db.prepare('INSERT INTO users (id, email, password_hash, full_name) VALUES (?, ?, ?, ?)').run(
-        userId, email, hashPassword(password), full_name
+      await db.prepare('INSERT INTO users (id, email, password_hash, full_name, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)').run(
+        userId, email, hashPassword(password), resolvedFullName, resolvedFirstName || resolvedFullName, resolvedLastName
       );
       await db.prepare(`INSERT INTO organizations (id, name, industry, settings, status, approval_token, approval_token_expires_at, last_approval_email_sent_at, tos_accepted_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
@@ -105,12 +121,12 @@ router.post('/register', async (req, res) => {
         );
       }
       const nowIso = new Date().toISOString();
-      await db.prepare(`INSERT INTO employees (id, organization_id, user_email, full_name, role, permission_level, status, hire_date, email_verified_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-        empId, orgId, email, full_name, 'Organization Admin', 'org_admin', 'active', new Date().toISOString().split('T')[0], nowIso
+      await db.prepare(`INSERT INTO employees (id, organization_id, user_email, full_name, first_name, last_name, role, permission_level, status, hire_date, email_verified_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        empId, orgId, email, resolvedFullName, resolvedFirstName || resolvedFullName, resolvedLastName, 'Organization Admin', 'org_admin', 'active', new Date().toISOString().split('T')[0], nowIso
       );
     })();
-    await sendApprovalEmailIfAllowed(orgId, org_name, email, full_name);
+    await sendApprovalEmailIfAllowed(orgId, org_name, email, resolvedFullName);
     res.json({ success: true, pendingApproval: true, message: 'Your organization is pending approval from the platform administrator. You will receive an email when approved.' });
   } catch (e) {
     console.error('Register error:', e);
@@ -230,7 +246,7 @@ router.post('/login', async (req, res) => {
         token,
         refresh_token: refreshToken,
         expires_in: 900,
-        user: { email: superAdmin.email, full_name: superAdmin.full_name },
+        user: { email: superAdmin.email, full_name: superAdmin.full_name, first_name: superAdmin.first_name, last_name: superAdmin.last_name },
         superAdmin: true,
         org: null,
         employee: null,
@@ -271,7 +287,7 @@ router.post('/login', async (req, res) => {
       setRefreshCookie(res, refreshToken);
     }
     const { org: orgCtx, employee } = await getEmployeeContext(user.email);
-    res.json({ token, refresh_token: refreshToken, expires_in: 900, user: { email: user.email, full_name: user.full_name }, org: orgCtx, employee });
+    res.json({ token, refresh_token: refreshToken, expires_in: 900, user: { email: user.email, full_name: user.full_name, first_name: user.first_name, last_name: user.last_name }, org: orgCtx, employee });
   } catch (e) {
     console.error('Login error:', e);
     res.status(500).json({ error: safeErrorMsg(e) });
@@ -312,7 +328,7 @@ router.post('/google', async (req, res) => {
       setRefreshCookie(res, refreshToken);
     }
     const { org: orgCtx, employee } = await getEmployeeContext(user.email);
-    res.json({ token, refresh_token: refreshToken, expires_in: 900, user: { email: user.email, full_name: user.full_name }, org: orgCtx, employee });
+    res.json({ token, refresh_token: refreshToken, expires_in: 900, user: { email: user.email, full_name: user.full_name, first_name: user.first_name, last_name: user.last_name }, org: orgCtx, employee });
   } catch (e) {
     console.error('Google login error:', e);
     res.status(401).json({ error: safeErrorMsg(e) || 'Google Sign-In failed' });
@@ -480,7 +496,8 @@ router.post('/reset-password', async (req, res) => {
   try {
     const { token, new_password } = req.body;
     if (!token || !new_password) return res.status(400).json({ error: 'token and new_password required' });
-    if (!isValidPassword(new_password)) return res.status(400).json({ error: 'Password must be 8-128 characters' });
+    const pwErr = validatePasswordStrength(new_password);
+    if (pwErr) return res.status(400).json({ error: pwErr });
     const row = await db.prepare('SELECT * FROM password_reset_tokens WHERE token = ? AND used_at IS NULL').get(token);
     if (!row) return res.status(404).json({ error: 'Invalid or expired reset link' });
     const now = new Date().toISOString();
@@ -633,7 +650,7 @@ router.post('/invites/validate', async (req, res) => {
 // POST /api/auth/invites/accept - Public: accept invite with Google credential or email/password
 router.post('/invites/accept', async (req, res) => {
   try {
-    const { token, credential, password, full_name } = req.body;
+    const { token, credential, password, full_name, first_name, last_name } = req.body;
     if (!token || typeof token !== 'string') {
       return res.status(400).json({ error: 'Token required' });
     }
@@ -660,9 +677,12 @@ router.post('/invites/accept', async (req, res) => {
       }
     } else if (password && typeof password === 'string') {
       email = invite.email;
-      name = (full_name || invite.full_name || email).trim().slice(0, 200);
-      if (!isValidPassword(password)) {
-        return res.status(400).json({ error: 'Password must be 8-128 characters' });
+      const resolvedFirst = (first_name || '').trim();
+      const resolvedLast = (last_name || '').trim();
+      name = (full_name || [resolvedFirst, resolvedLast].filter(Boolean).join(' ') || invite.full_name || email).trim().slice(0, 200);
+      const pwErr = validatePasswordStrength(password);
+      if (pwErr) {
+        return res.status(400).json({ error: pwErr });
       }
     } else {
       return res.status(400).json({ error: 'Provide credential (Google) or password' });
