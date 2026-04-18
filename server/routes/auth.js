@@ -10,6 +10,7 @@ const APPROVAL_TOKEN_EXPIRY_DAYS = 7;
 const APPROVAL_EMAIL_COOLDOWN_MINUTES = 60;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const isProd = process.env.NODE_ENV === 'production';
+const REGISTRATION_DISABLED = process.env.DISABLE_REGISTRATION === 'true';
 
 function safeErrorMsg(e) {
   return isProd ? 'An error occurred' : (e?.message || 'An error occurred');
@@ -96,6 +97,7 @@ async function sendApprovalEmailIfAllowed(orgId, orgName, adminEmail, adminName)
 
 // POST /api/auth/register - First user creates org (Setup flow) - requires super admin approval
 router.post('/register', async (req, res) => {
+  if (REGISTRATION_DISABLED) return res.status(403).json({ error: 'Registration is temporarily closed. Contact the platform administrator for access.' });
   try {
     const { email, password, full_name, first_name, last_name, org_name, industry, locations, roles, departments, accept_tos } = req.body;
     // Compose full_name from first/last if provided separately
@@ -354,6 +356,7 @@ router.post('/google', async (req, res) => {
 
 // POST /api/auth/google-register - Sign up with Google (create org + account) - requires super admin approval
 router.post('/google-register', async (req, res) => {
+  if (REGISTRATION_DISABLED) return res.status(403).json({ error: 'Registration is temporarily closed. Contact the platform administrator for access.' });
   try {
     const { credential, org_name, industry, locations, roles, departments, accept_tos } = req.body;
     if (!credential || typeof credential !== 'string') {
