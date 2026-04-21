@@ -382,14 +382,73 @@ router.post('/account/change-password', async (req, res) => {
   if (typeof new_password !== 'string' || new_password.length < 8 || new_password.length > 128) {
     return res.status(400).json({ error: 'New password must be 8-128 characters' });
   }
-  const user = req.user;
-  if (!verifyPassword(current_password, user.password_hash)) {
+  // Re-fetch from DB — authMiddleware strips password_hash from req.user
+  const table = req.superAdmin ? 'super_admins' : 'users';
+  const fullUser = await db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(req.user.id);
+  if (!fullUser || !verifyPassword(current_password, fullUser.password_hash)) {
     return res.status(401).json({ error: 'Current password is incorrect' });
   }
-  const table = req.superAdmin ? 'super_admins' : 'users';
-  const idCol = req.superAdmin ? 'id' : 'id';
-  await db.prepare(`UPDATE ${table} SET password_hash = ? WHERE ${idCol} = ?`).run(hashPassword(new_password), user.id);
+  await db.prepare(`UPDATE ${table} SET password_hash = ? WHERE id = ?`).run(hashPassword(new_password), req.user.id);
   res.json({ data: { success: true } });
+});
+
+// Account: delete account (org users only — app store requirement)
+router.post('/account/delete-account', async (req, res) => {
+  try {
+    if (req.superAdmin) {
+      return res.status(403).json({ error: 'Super admin accounts cannot be deleted via the app. Remove the environment variable instead.' });
+    }
+    const { password } = req.body;
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Password required to confirm account deletion' });
+    }
+    // Re-fetch from DB to get password_hash (stripped by authMiddleware)
+    const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!verifyPassword(password, user.password_hash)) {
+      return res.status(401).json({ error: 'Incorrect password' });
+    }
+
+    const now = sqlNow();
+    const audit = getAuditContext(req);
+
+    await db.transaction(async () => {
+      // Soft-delete: deactivate all employee records for this user
+      await db.prepare(
+        'UPDATE employees SET status = ?, deleted_at = ? WHERE LOWER(user_email) = ? AND deleted_at IS NULL'
+      ).run('deactivated', now, user.email.toLowerCase());
+
+      // Mark user as deleted (soft delete — preserves audit trail)
+      await db.prepare(
+        'UPDATE users SET deleted_at = ?, email = ? WHERE id = ?'
+      ).run(now, `deleted_${user.id}@deleted.noblehr`, user.id);
+
+      // Revoke all refresh tokens
+      await db.prepare(
+        'UPDATE refresh_tokens SET revoked_at = ? WHERE user_type = ? AND user_id = ? AND revoked_at IS NULL'
+      ).run(now, 'user', user.id);
+
+      // Audit log — immutable record of deletion
+      await db.prepare(
+        'INSERT INTO system_events (id, organization_id, event_type, entity_type, entity_id, actor_email, actor_name, summary, metadata, ip_address, device_id, app_source, old_value, new_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).run(
+        uuidv4(), null, 'account.deleted', 'User', user.id,
+        user.email, user.full_name || '',
+        `User ${user.email} deleted their account`,
+        stringifyJson({ reason: 'user_requested' }),
+        audit.ip_address, audit.device_id, audit.app_source, null, null
+      );
+    })();
+
+    // Clear session cookies
+    res.clearCookie('pv_access_token', { path: '/' });
+    res.clearCookie('pv_refresh_token', { path: '/' });
+    res.json({ data: { success: true, message: 'Your account has been deleted.' } });
+  } catch (e) {
+    console.error('Account deletion error:', e);
+    const isProd = process.env.NODE_ENV === 'production';
+    res.status(500).json({ error: isProd ? 'An error occurred' : e.message });
+  }
 });
 
 // Account: change email (org users only)

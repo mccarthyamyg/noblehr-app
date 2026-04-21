@@ -5,7 +5,7 @@ import { useOrg } from '../components/hooks/useOrganization';
 import { useAuth } from '@/lib/AuthContext';
 import { createPageUrl } from '../utils';
 import PageHeader from '../components/shared/PageHeader';
-import { User, Lock, Mail, LogOut } from 'lucide-react';
+import { User, Lock, Mail, LogOut, AlertTriangle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +30,13 @@ export default function Profile() {
   const [pwMsg, setPwMsg] = useState(null);
   const [emailMsg, setEmailMsg] = useState(null);
   const [profileMsg, setProfileMsg] = useState(null);
+
+  // Account deletion state
+  const [deleteStep, setDeleteStep] = useState(0); // 0=hidden, 1=confirm, 2=password
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteMsg, setDeleteMsg] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const user = authUser || { email: employee?.user_email, full_name: employee?.full_name };
   const canChangeEmail = !superAdmin && employee?.user_email;
@@ -98,6 +105,25 @@ export default function Profile() {
       setProfileMsg({ type: 'error', text: err.data?.error || err.message });
     } finally {
       setProfileSaving(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteConfirmText !== 'DELETE') return;
+    if (!deletePassword) {
+      setDeleteMsg({ type: 'error', text: 'Please enter your password' });
+      return;
+    }
+    setDeleting(true);
+    setDeleteMsg(null);
+    try {
+      await api.account.deleteAccount(deletePassword);
+      logout();
+      navigate('/Login', { replace: true });
+    } catch (err) {
+      setDeleteMsg({ type: 'error', text: err.data?.error || err.message });
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -246,8 +272,117 @@ export default function Profile() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Danger Zone — Account Deletion (app store requirement) */}
+        <Card className="border-red-200 bg-red-50/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-700">
+              <AlertTriangle className="w-5 h-5" />
+              Danger Zone
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {superAdmin ? (
+              <p className="text-sm text-slate-500">
+                Super admin accounts are managed via environment variables and cannot be deleted from the app.
+              </p>
+            ) : deleteStep === 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-slate-600">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+                <Button
+                  id="delete-account-start"
+                  variant="outline"
+                  className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                  onClick={() => setDeleteStep(1)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete My Account
+                </Button>
+              </div>
+            ) : deleteStep === 1 ? (
+              <div className="space-y-3">
+                <div className="bg-red-100 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm font-semibold text-red-800">⚠️ This will permanently:</p>
+                  <ul className="text-sm text-red-700 mt-1 ml-4 list-disc space-y-0.5">
+                    <li>Deactivate your employee profile</li>
+                    <li>Remove your login credentials</li>
+                    <li>Revoke all active sessions</li>
+                  </ul>
+                  <p className="text-sm text-red-700 mt-2">
+                    Your acknowledgment and audit records will be preserved for compliance purposes.
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-red-700">Type <strong>DELETE</strong> to confirm</Label>
+                  <Input
+                    id="delete-confirm-text"
+                    value={deleteConfirmText}
+                    onChange={e => setDeleteConfirmText(e.target.value)}
+                    placeholder="DELETE"
+                    className="border-red-300 focus:ring-red-500"
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    id="delete-account-next"
+                    variant="destructive"
+                    disabled={deleteConfirmText !== 'DELETE'}
+                    onClick={() => setDeleteStep(2)}
+                  >
+                    Continue
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setDeleteStep(0); setDeleteConfirmText(''); setDeleteMsg(null); }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="bg-red-100 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm font-semibold text-red-800">Final step: enter your password to confirm deletion.</p>
+                </div>
+                <div>
+                  <Label className="text-red-700">Password</Label>
+                  <Input
+                    id="delete-account-password"
+                    type="password"
+                    value={deletePassword}
+                    onChange={e => setDeletePassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="border-red-300 focus:ring-red-500"
+                    autoComplete="current-password"
+                  />
+                </div>
+                {deleteMsg && <p role="alert" className={`text-sm ${deleteMsg.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>{deleteMsg.text}</p>}
+                <div className="flex gap-2">
+                  <Button
+                    id="delete-account-confirm"
+                    variant="destructive"
+                    disabled={deleting || !deletePassword}
+                    onClick={handleDeleteAccount}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {deleting ? 'Deleting...' : 'Permanently Delete Account'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setDeleteStep(0); setDeleteConfirmText(''); setDeletePassword(''); setDeleteMsg(null); }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
+
 

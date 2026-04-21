@@ -260,6 +260,12 @@ export const api = {
         body: JSON.stringify({ token, new_password: newPassword }),
       });
     },
+    async deleteAccount(password) {
+      return request('/account/delete-account', {
+        method: 'POST',
+        body: JSON.stringify({ password }),
+      });
+    },
   },
 
   invites: {
