@@ -97,7 +97,7 @@ export default function MyWriteUps() {
                               {disciplineLevelLabels[record.discipline_level] || record.discipline_level}
                             </span>
                           </div>
-                          <p className="text-sm text-slate-600 mb-4" dangerouslySetInnerHTML={{ __html: record.description }} />
+                          <p className="text-sm text-slate-600 mb-4" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(record.description || '') }} />
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-slate-400">
                               Created: {format(new Date(record.created_date), 'MMMM d, yyyy')}

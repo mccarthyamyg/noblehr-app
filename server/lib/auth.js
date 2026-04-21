@@ -145,7 +145,7 @@ export async function authMiddleware(req, res, next) {
     return next();
   }
   const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(payload.userId);
-  if (!user) {
+  if (!user || user.deleted_at) {
     return res.status(401).json({ error: 'User not found' });
   }
   const { password_hash: _uph, ...safeUser } = user;

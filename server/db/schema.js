@@ -23,6 +23,7 @@ export const users = pgTable('users', {
   firstName: text('first_name'),
   lastName: text('last_name'),
   authProvider: text('auth_provider').default('email'),
+  deletedAt: text('deleted_at'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -282,7 +283,7 @@ export const systemEvents = pgTable(
   'system_events',
   {
     id: text('id').primaryKey(),
-    organizationId: text('organization_id').notNull(),
+    organizationId: text('organization_id'),
     eventType: text('event_type').notNull(),
     entityType: text('entity_type'),
     entityId: text('entity_id'),

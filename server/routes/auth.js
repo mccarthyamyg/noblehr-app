@@ -221,7 +221,10 @@ router.post('/refresh', async (req, res) => {
       return res.json({ token: accessToken, refresh_token: newRefresh, expires_in: 900 });
     }
     const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(row.user_id);
-    if (!user) return res.status(401).json({ error: 'User not found' });
+    if (!user || user.deleted_at) {
+      clearSessionCookies(res);
+      return res.status(401).json({ error: 'User not found' });
+    }
     const accessToken = createToken(user.id, user.email, { expiresIn: ACCESS_TOKEN_EXPIRY });
     const newRefresh = createRefreshTokenValue();
     const newExpires = new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString();
