@@ -13,6 +13,7 @@ import { mkdirSync, existsSync } from 'fs';
 
 import { authRouter } from './routes/auth.js';
 import { apiRouter } from './routes/api.js';
+import { notificationsRouter } from './routes/notifications.js';
 import { db } from './lib/db.js';
 import { db as pgDb } from './lib/db-pg-adapter.js';
 import { csrfMiddleware } from './lib/auth.js';
@@ -123,6 +124,7 @@ app.use('/api', rateLimit({ windowMs: 60 * 1000, max: 100, message: { error: 'To
 app.use('/api/auth', authRouter);
 // CSRF for state-changing API requests (after auth; GET/HEAD/OPTIONS skipped inside middleware)
 app.use('/api', csrfMiddleware);
+app.use('/api/notifications', notificationsRouter);
 app.use('/api', apiRouter);
 
 // Global error handler (catches unhandled errors in route handlers)

@@ -111,6 +111,7 @@ function LayoutShell({ children, currentPageName }) {
     { name: 'Activity Log', icon: Bell, page: 'ActivityLog', category: 'Audit & Compliance', show: hasCap('view_activity_log') },
     { name: 'Org Settings', icon: Settings, page: 'OrgSettings', category: 'Settings', show: hasCap('manage_org_settings') },
     { name: 'Integrations', icon: Plug, page: 'IntegrationsSettings', category: 'Settings', show: false },
+    { name: 'Notifications', icon: Bell, page: 'NotificationSettings', category: 'Settings', show: true },
     { name: 'My Account', icon: User, page: 'Profile', category: 'Settings', show: true },
   ].filter(i => i.show);
 

@@ -268,6 +268,27 @@ export const api = {
     },
   },
 
+  notifications: {
+    async getPreferences() {
+      return request('/notifications/preferences', { method: 'GET' });
+    },
+    async updatePreference(notificationType, delivery) {
+      return request('/notifications/preferences', {
+        method: 'PUT',
+        body: JSON.stringify({ notification_type: notificationType, delivery }),
+      });
+    },
+    async getOrgDefaults() {
+      return request('/notifications/org-defaults', { method: 'GET' });
+    },
+    async updateOrgDefault(notificationType, delivery) {
+      return request('/notifications/org-defaults', {
+        method: 'PUT',
+        body: JSON.stringify({ notification_type: notificationType, delivery }),
+      });
+    },
+  },
+
   invites: {
     async validate(token) {
       const res = await fetch(`${API_BASE}/auth/invites/validate`, {

@@ -61,6 +61,7 @@ import Handbook from './pages/Handbook';
 import Incidents from './pages/Incidents';
 import MyOnboarding from './pages/MyOnboarding';
 import MyWriteUps from './pages/MyWriteUps';
+import NotificationSettings from './pages/NotificationSettings';
 import Onboarding from './pages/Onboarding';
 import OrgSettings from './pages/OrgSettings';
 import Policies from './pages/Policies';
@@ -87,6 +88,7 @@ export const PAGES = {
     "Incidents": Incidents,
     "MyOnboarding": MyOnboarding,
     "MyWriteUps": MyWriteUps,
+    "NotificationSettings": NotificationSettings,
     "Onboarding": Onboarding,
     "OrgSettings": OrgSettings,
     "Policies": Policies,
