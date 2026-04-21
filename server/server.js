@@ -10,7 +10,6 @@ import cookieParser from 'cookie-parser';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdirSync, existsSync } from 'fs';
-import { spawnSync } from 'child_process';
 
 import { authRouter } from './routes/auth.js';
 import { apiRouter } from './routes/api.js';
@@ -19,6 +18,7 @@ import { db as pgDb } from './lib/db-pg-adapter.js';
 import { csrfMiddleware } from './lib/auth.js';
 import { runSqliteMigrations } from './lib/run-sqlite-migrations.js';
 import { runPgMigrations } from './db/run-pg-migrations.js';
+import { upsertSuperAdminCredentials } from './lib/super-admin-sync.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3001;
@@ -141,10 +141,6 @@ if (existsSync(clientDist)) {
   });
 }
 
-// Ensure data dir and uploads dir exist (TRUTH #56 - employee documents)
-mkdirSync(join(__dirname, 'data'), { recursive: true });
-mkdirSync(join(__dirname, 'data', 'uploads'), { recursive: true });
-
 async function runStartupMigrations() {
   if (process.env.DATABASE_URL) {
     try {
@@ -162,26 +158,57 @@ async function runStartupMigrations() {
   }
 }
 
-/** Phase 1: only when AUTO_SEED_SUPER_ADMIN=true and SUPER_ADMIN_PASSWORD is set (never hardcode in source). */
-function maybeAutoSeedSuperAdmin() {
-  if (process.env.AUTO_SEED_SUPER_ADMIN !== 'true') return;
-  const p = process.env.SUPER_ADMIN_PASSWORD;
+/**
+ * Apply super admin email/password from env into the DB on boot (same DB layer as /api/auth/login).
+ * - SUPER_ADMIN_PASSWORD must be at least 8 chars.
+ * - In production, SUPER_ADMIN_EMAIL is required whenever this runs (AUTO_SEED or explicit email path).
+ * - With AUTO_SEED_SUPER_ADMIN only (no email), dev uses legacy test email; production skips and logs an error.
+ */
+async function maybeSyncSuperAdminFromEnv() {
+  const rawPass = process.env.SUPER_ADMIN_PASSWORD;
+  const p = typeof rawPass === 'string' ? rawPass.trim() : rawPass;
   if (!p || p.length < 8) {
-    console.warn('[AUTO-BOOT] AUTO_SEED_SUPER_ADMIN is set but SUPER_ADMIN_PASSWORD is missing or shorter than 8 chars; skipping seed.');
+    if (process.env.AUTO_SEED_SUPER_ADMIN === 'true') {
+      console.warn('[startup] AUTO_SEED_SUPER_ADMIN is set but SUPER_ADMIN_PASSWORD is missing or shorter than 8 chars; skipping super admin sync.');
+    }
     return;
   }
-  const r = spawnSync(process.execPath, ['scripts/seed-super-admin.js'], {
-    cwd: __dirname,
-    env: { ...process.env, SUPER_ADMIN_PASSWORD: p },
-    stdio: 'inherit',
-  });
-  if (r.status !== 0) console.error('[AUTO-BOOT] Super admin seed exited with code', r.status);
-  else console.log('[AUTO-BOOT] Super admin seed completed.');
+  const email = process.env.SUPER_ADMIN_EMAIL?.trim();
+  const fromLegacyFlag = process.env.AUTO_SEED_SUPER_ADMIN === 'true';
+  const fromExplicitEmail = !!email;
+  if (!fromLegacyFlag && !fromExplicitEmail) return;
+
+  if (fromLegacyFlag && !email && isProd) {
+    console.error(
+      '[startup] Set SUPER_ADMIN_EMAIL in Railway/production. AUTO_SEED_SUPER_ADMIN without it would only update the dev default address; skipping super admin sync.',
+    );
+    return;
+  }
+
+  const targetEmail = email || 'mccarthy.amyg@gmail.com';
+  try {
+    await upsertSuperAdminCredentials(targetEmail, p);
+    console.log(`[startup] Super admin credentials synced for ${targetEmail.toLowerCase()}`);
+  } catch (err) {
+    console.error('[startup] Super admin sync failed:', err.message);
+  }
 }
 
-app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`Noble HR server running on http://0.0.0.0:${PORT}`);
-  console.log(`Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
+async function bootstrap() {
+  mkdirSync(join(__dirname, 'data'), { recursive: true });
+  mkdirSync(join(__dirname, 'data', 'uploads'), { recursive: true });
   await runStartupMigrations();
-  maybeAutoSeedSuperAdmin();
-});
+  await maybeSyncSuperAdminFromEnv();
+}
+
+bootstrap()
+  .then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Noble HR server running on http://0.0.0.0:${PORT}`);
+      console.log(`Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Bootstrap failed:', err);
+    process.exit(1);
+  });

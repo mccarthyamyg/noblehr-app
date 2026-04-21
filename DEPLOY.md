@@ -8,7 +8,7 @@ This guide covers deploying the web app to a hosted server (e.g. **Railway**, Re
 
 - **Backend:** Node.js (Express) on `PORT` (default 3001).
 - **Frontend:** Static files (Vite build) served from the same server at `/`; API at `/api`.
-- **Database:** SQLite file at `server/data/policyvault.db`. On Railway/Render use a **persistent volume** so the file survives restarts.
+- **Database:** SQLite file at `server/data/noblehr.db`. On Railway/Render use a **persistent volume** so the file survives restarts.
 
 ---
 
@@ -59,9 +59,11 @@ Set these on your host (Railway dashboard, Render dashboard, or `.env`):
 | `PORT` | No | Default 3001; host often sets this (e.g. Railway sets PORT). |
 | `FRONTEND_URL` | Yes | Full app URL, e.g. `https://yourapp.up.railway.app` (for invite/reset/launch links). |
 | `CORS_ORIGINS` | No | Comma-separated origins; defaults to `FRONTEND_URL` if unset. |
+| `AUTH_COOKIE_SAMESITE` | No | Default `strict`. If the **web app is on a different domain** than the API (e.g. Vercel + Railway), set **`none`** so login cookies are sent on cross-origin `fetch` (must use HTTPS). |
 | `GOOGLE_CLIENT_ID` | No | For Google Sign-In. |
-| `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` | No | For E2E/CI; in prod you use seed-super-admin and set your own. |
-| SMTP_* | No | For approval and password-reset emails; optional. |
+| `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` | No | If **both** are set and the password is **8+ characters**, the server upserts this super admin on startup (same DB as login). **In production, always set `SUPER_ADMIN_EMAIL`** — if you only set `AUTO_SEED_SUPER_ADMIN=true` and a password, the server will **not** apply the legacy test email (you must set the real email explicitly). |
+| `RESEND_API_KEY` | No | Resend API key; required for real email. Without it, approval/reset/verify emails are logged only (see server startup: “Email not configured”). |
+| `EMAIL_FROM` | No | Default `Noble HR <onboarding@resend.dev>`. For production, verify your domain in Resend and set e.g. `Noble HR <noreply@yourdomain.com>`. |
 
 ---
 
@@ -86,9 +88,9 @@ Set these on your host (Railway dashboard, Render dashboard, or `.env`):
      ```
      But then `__dirname` in server is `server/`, so `data` is `server/data` — that’s fine. Check that `server.js` and `lib/db.js` paths are correct when started from repo root (they use `__dirname` so they should be).
 
-3. **Persistent volume (SQLite):** Add a volume and mount it to a path, e.g. `server/data`. Configure the app so the SQLite file is written there (it already is: `server/data/policyvault.db`). So mount the volume at `server/data` (or the path your app uses).
+3. **Persistent volume (SQLite):** Add a volume and mount it to a path, e.g. `server/data`. The app uses `server/data/noblehr.db`. Mount the volume at `server/data`.
 
-4. **Env vars:** Set `NODE_ENV=production`, `JWT_SECRET`, `FRONTEND_URL` (your Railway app URL, e.g. `https://policyvault-production.up.railway.app`).
+4. **Env vars:** Set `NODE_ENV=production`, `JWT_SECRET`, `FRONTEND_URL` (your Railway app URL, e.g. `https://policyvault-production.up.railway.app`). Add `RESEND_API_KEY` (and optionally `EMAIL_FROM`) so transactional email sends instead of only logging.
 
 5. **First deploy:** After the first successful deploy, run migrations and seed super admin. Use Railway’s “one-off command” or a deploy hook:
    ```bash
@@ -116,7 +118,7 @@ Set these on your host (Railway dashboard, Render dashboard, or `.env`):
 - [ ] `https://your-app-url/api/health` returns `{"ok":true,"db":"connected"}`.
 - [ ] Open `https://your-app-url` and see the login page (no blank or 404).
 - [ ] Log in as super admin (after seeding); Super Admin page loads.
-- [ ] Set up SMTP (optional) for approval and password-reset emails.
+- [ ] Set `RESEND_API_KEY` (optional but recommended) for approval, password-reset, and verification emails.
 
 ---
 

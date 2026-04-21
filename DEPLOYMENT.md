@@ -8,7 +8,7 @@ This doc covers everything needed to deploy the app for web hosting and avoid fu
 
 - **Client:** Vite/React SPA in `Handbook Policy App/`. Build output: `Handbook Policy App/dist/`.
 - **Server:** Node.js + Express in `server/`. Serves API at `/api/*` and can serve the built client static files.
-- **Database:** SQLite at `server/data/policyvault.db` (run `npm run init-db` in `server/` once before first start).
+- **Database:** SQLite at `server/data/noblehr.db` (run `npm run init-db` in `server/` once before first start).
 
 **Deployment modes:**
 
@@ -31,7 +31,7 @@ Copy from `server/.env.example`. **Required in production:**
 | `FRONTEND_URL` | Yes (if split)  | Full URL of the client app (e.g. `https://app.example.com`). Used for invite/reset/launch links and CORS. |
 | `CORS_ORIGINS` | Yes (if split)  | Comma-separated allowed origins (e.g. `https://app.example.com`). |
 
-**Optional:** `GOOGLE_CLIENT_ID`, SMTP vars (see `.env.example`), `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` (for E2E/CI).
+**Optional:** `GOOGLE_CLIENT_ID`, `RESEND_API_KEY` and `EMAIL_FROM` for transactional email (see `server/.env.example`). **`SUPER_ADMIN_EMAIL` + `SUPER_ADMIN_PASSWORD` (8+ chars):** applied on server startup (creates/updates super admin); also used for E2E/smoke. Optional legacy: `AUTO_SEED_SUPER_ADMIN=true` with password only.
 
 ### Client (`Handbook Policy App/.env` or `.env.production`)
 

@@ -248,11 +248,12 @@ router.post('/login', async (req, res) => {
     }
     if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
     const emailLower = email.trim().toLowerCase();
+    const passwordClean = typeof password === 'string' ? password.trimEnd() : String(password);
     const isWeb = req.headers['x-client-type'] !== 'mobile';
 
     // Super admin login
     const superAdmin = await db.prepare('SELECT * FROM super_admins WHERE LOWER(email) = ?').get(emailLower);
-    if (superAdmin && verifyPassword(password, superAdmin.password_hash)) {
+    if (superAdmin && verifyPassword(passwordClean, superAdmin.password_hash)) {
       const token = createToken(superAdmin.id, superAdmin.email, { isSuperAdmin: true, expiresIn: ACCESS_TOKEN_EXPIRY });
       const refreshExpires = new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString();
       const refreshToken = createRefreshTokenValue();
@@ -273,7 +274,7 @@ router.post('/login', async (req, res) => {
     }
 
     const user = await db.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(emailLower);
-    if (!user || !verifyPassword(password, user.password_hash)) {
+    if (!user || !verifyPassword(passwordClean, user.password_hash)) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     if (user.auth_provider === 'google') {

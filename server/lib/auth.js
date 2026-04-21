@@ -40,11 +40,27 @@ export function verifyToken(token) {
   }
 }
 
+function resolveCookieSameSite() {
+  const raw = process.env.AUTH_COOKIE_SAMESITE || process.env.COOKIE_SAMESITE;
+  if (raw && ['strict', 'lax', 'none'].includes(String(raw).toLowerCase())) {
+    return String(raw).toLowerCase();
+  }
+  return 'strict';
+}
+
 function getCookieOptions(name, maxAgeSec) {
-  const opts = { path: '/', sameSite: 'strict', maxAge: maxAgeSec * 1000 };
-  if (isProd) opts.secure = true;
+  const sameSite = resolveCookieSameSite();
+  const opts = { path: '/', sameSite, maxAge: maxAgeSec * 1000 };
+  if (isProd || sameSite === 'none') opts.secure = true; // SameSite=None requires Secure; prod is always HTTPS
   if (name === COOKIE_ACCESS_TOKEN || name === COOKIE_REFRESH_TOKEN) opts.httpOnly = true;
   return opts;
+}
+
+function clearCookieOpts() {
+  const sameSite = resolveCookieSameSite();
+  const o = { path: '/', sameSite };
+  if (isProd || sameSite === 'none') o.secure = true;
+  return o;
 }
 
 export function setAuthCookie(res, token) {
@@ -92,11 +108,11 @@ export async function revokeAllRefreshTokensForUser(userType, userId) {
 }
 
 export function clearAuthCookie(res) {
-  res.clearCookie(COOKIE_ACCESS_TOKEN, { path: '/' });
+  res.clearCookie(COOKIE_ACCESS_TOKEN, clearCookieOpts());
 }
 
 export function clearRefreshCookie(res) {
-  res.clearCookie(COOKIE_REFRESH_TOKEN, { path: '/' });
+  res.clearCookie(COOKIE_REFRESH_TOKEN, clearCookieOpts());
 }
 
 export function clearSessionCookies(res) {

@@ -71,15 +71,15 @@ curl http://localhost:3001/api/health
 
 ## Smoke test (Launch flow)
 
-With the server running, set the same `SUPER_ADMIN_PASSWORD` you used for `seed-super-admin` (or Railway secret):
+With the server running, set the same credentials as in the DB (match `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` if you use env-based sync):
 
 ```bash
-cd server && SUPER_ADMIN_PASSWORD=YourPass123! npm run test:smoke
+cd server && SUPER_ADMIN_EMAIL=you@example.com SUPER_ADMIN_PASSWORD=YourPass123! npm run test:smoke
 ```
 
-E2E: `SUPER_ADMIN_PASSWORD=YourPass123! npm run test:e2e`
+E2E: `SUPER_ADMIN_EMAIL=... SUPER_ADMIN_PASSWORD=... npm run test:e2e`
 
-Optional one-time boot seed (local only): `AUTO_SEED_SUPER_ADMIN=true` and `SUPER_ADMIN_PASSWORD` in `.env` — **do not** enable in production unless you accept boot-time writes.
+**Production / Railway:** If both `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` (8+ chars) are set, the server applies them on **each startup** (see `server/server.js`). Legacy: `AUTO_SEED_SUPER_ADMIN=true` with password only uses the seed script’s default email when `SUPER_ADMIN_EMAIL` is unset.
 
 Verifies: super admin login → ensure test org → launch token → GET /me, policies-for-employee, handbook-data, my-acknowledgments (Dashboard/Handbook/Policies would load in browser).
 
@@ -87,9 +87,9 @@ Verifies: super admin login → ensure test org → launch token → GET /me, po
 
 ## Database
 
-- **Path:** `server/data/policyvault.db`
-- **Backup:** `cp server/data/policyvault.db server/data/policyvault.db.bak` (or host backup/volume snapshot)
-- **Restore:** Stop server, replace `policyvault.db` with backup, restart.
+- **Path:** `server/data/noblehr.db` (see `server/lib/db.js`)
+- **Backup:** `npm run backup --prefix server`, or copy the file / use volume snapshots
+- **Restore:** Stop server, replace `noblehr.db` with backup, restart.
 - **Production:** Use a persistent volume (Railway/Render disk) mounted at `server/data` so the DB survives deploys.
 
 ---
@@ -118,7 +118,7 @@ Verifies: super admin login → ensure test org → launch token → GET /me, po
 
 - **Logs:** Console only. In production, redirect to file or use a logging service: `npm start >> logs/app.log 2>&1`. Optional: Sentry (or similar) for error tracking.
 - **Health:** Use `/api/health` for load balancer or host health checks (returns 200 when DB is connected).
-- **Backups:** Schedule copies of `server/data/policyvault.db` (cron or host backup). See Database above.
+- **Backups:** Schedule `npm run backup --prefix server` or copies of `server/data/noblehr.db` (cron or host backup). See Database above.
 
 ---
 
@@ -128,7 +128,7 @@ Use these to verify core flows after changes or before release.
 
 ### Super Admin
 
-1. Log in at http://localhost:5173/Login with super admin email/password (see `server/scripts/seed-super-admin.js` or `.env`).
+1. Log in at http://localhost:5173/Login with super admin email/password (`server/.env` / Railway: `SUPER_ADMIN_*`, or run `npm run seed-super-admin` once).
 2. You should land on **Super Admin**.
 3. **Pending approvals:** If any orgs are pending, use Approve or Reject (with confirmation).
 4. **Launch Test Instance:** Click “Launch Test App” → a new tab opens the app as the test org; confirm Dashboard, Handbook, and Policies load (no infinite loading).
@@ -141,7 +141,7 @@ Use these to verify core flows after changes or before release.
 2. **Dashboard:** Stats and links load; no error banner.
 3. **Policies:** List policies; create a draft, publish; view as employee.
 4. **Handbook:** Open handbook; confirm content loads.
-5. **Employees:** List; create invite (link is returned; no email sent unless SMTP configured).
+5. **Employees:** List; create invite (link is returned; transactional email uses Resend when `RESEND_API_KEY` is set — see `server/.env.example`).
 6. **HR Records / Incidents:** List; create if needed.
 7. **Settings:** Org Settings, Activity Log — load without error.
 
