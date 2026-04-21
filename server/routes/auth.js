@@ -327,13 +327,48 @@ router.post('/google', async (req, res) => {
     const payload = await verifyGoogleToken(credential);
     const email = payload.email;
     if (!email) return res.status(400).json({ error: 'Google account has no email' });
+    const isWeb = req.headers['x-client-type'] !== 'mobile';
+
+    // Super admin detection: if Google email matches SUPER_ADMIN_EMAIL, grant super admin access
+    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.trim()?.toLowerCase();
+    if (superAdminEmail && email.toLowerCase() === superAdminEmail) {
+      const superAdmin = await db.prepare('SELECT * FROM super_admins WHERE LOWER(email) = ?').get(email.toLowerCase());
+      if (superAdmin) {
+        const token = createToken(superAdmin.id, superAdmin.email, { isSuperAdmin: true, expiresIn: ACCESS_TOKEN_EXPIRY });
+        const refreshExpires = new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString();
+        const refreshToken = createRefreshTokenValue();
+        await storeRefreshToken('super_admin', superAdmin.id, refreshToken, refreshExpires);
+        if (isWeb) {
+          setAuthCookie(res, token);
+          setRefreshCookie(res, refreshToken);
+        }
+        return res.json({
+          token,
+          refresh_token: refreshToken,
+          expires_in: 900,
+          user: { email: superAdmin.email, full_name: superAdmin.full_name, first_name: superAdmin.first_name, last_name: superAdmin.last_name },
+          superAdmin: true,
+          org: null,
+          employee: null,
+        });
+      }
+    }
+
     const user = await db.prepare('SELECT * FROM users WHERE email = ?').get(email);
     if (!user) {
       return res.status(404).json({ error: 'No account found', needSignup: true, email: payload.email, full_name: payload.name || '' });
     }
+    if (user.deleted_at) {
+      return res.status(401).json({ error: 'Account not found' });
+    }
     const emp = await db.prepare('SELECT * FROM employees WHERE user_email = ? AND status = ? AND deleted_at IS NULL').get(email, 'active');
     if (!emp) {
       return res.status(403).json({ error: 'No active employee record. Contact your administrator.' });
+    }
+    // Auto-verify email for Google OAuth users (Google already verified their identity)
+    if (!emp.email_verified_at) {
+      const now = new Date().toISOString();
+      await db.prepare('UPDATE employees SET email_verified_at = ?, email_verification_token = NULL, email_verification_token_expires = NULL WHERE id = ?').run(now, emp.id);
     }
     const org = await db.prepare('SELECT * FROM organizations WHERE id = ?').get(emp.organization_id);
     if (org?.status === 'pending_approval') {
@@ -346,7 +381,7 @@ router.post('/google', async (req, res) => {
     const refreshExpires = new Date(Date.now() + REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const refreshToken = createRefreshTokenValue();
     await storeRefreshToken('user', user.id, refreshToken, refreshExpires);
-    if (req.headers['x-client-type'] !== 'mobile') {
+    if (isWeb) {
       setAuthCookie(res, token);
       setRefreshCookie(res, refreshToken);
     }

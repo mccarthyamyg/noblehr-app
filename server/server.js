@@ -185,7 +185,7 @@ async function maybeSyncSuperAdminFromEnv() {
     return;
   }
 
-  const targetEmail = email || 'mccarthy.amyg@gmail.com';
+  const targetEmail = email || 'nobleplatformops@gmail.com';
   try {
     await upsertSuperAdminCredentials(targetEmail, p);
     console.log(`[startup] Super admin credentials synced for ${targetEmail.toLowerCase()}`);
